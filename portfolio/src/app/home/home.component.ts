@@ -82,10 +82,20 @@ export class HomeComponent implements AfterViewInit {
   }
 
   scrollTo(section: string) {
-    const element = document.getElementById(section);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (section === 'about') {
+      // Scroll to the top of the page
+      let top = document.getElementById('top');
+      if (top !== null) {
+        top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        top = null;
+      }
       this.activeSection = section;
+    } else {
+      const element = document.getElementById(section);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        this.activeSection = section;
+      }
     }
   }
 }
