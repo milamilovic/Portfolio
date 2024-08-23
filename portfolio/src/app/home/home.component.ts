@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, HostListener} from '@angular/core';
+import {AfterViewInit, ChangeDetectorRef, Component, HostListener} from '@angular/core';
 import {NgForOf} from "@angular/common";
 
 @Component({
@@ -10,52 +10,82 @@ import {NgForOf} from "@angular/common";
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
-export class HomeComponent{
-  chapters = [
-    { id: 'chapter1', title: 'Chapter 1', content: 'Bali is predominantly a Hindu country. Bali is known for its elaborate, traditional dancing. The dancing is inspired by its Hindi beliefs. Most of the dancing portrays tales of good versus evil. To watch the dancing is a breathtaking experience. Lombok has some impressive points of interest – the majestic Gunung Rinjani is an active volcano. It is the second highest peak in Indonesia. Art is a Balinese passion. Batik paintings and carved statues make popular souvenirs. Artists can be seen whittling and painting on the streets, particularly in Ubud. It is easy to appreciate each island as an attractive tourist destination. Majestic scenery; rich culture; white sands and warm, azure waters draw visitors like magnets every year. Snorkelling and diving around the nearby Gili Islands is magnificent. Marine fish, starfish, turtles and coral reef are present in abundance. Bali and Lombok are part of the Indonesian archipelago. Bali has some spectacular temples. The most significant is the Mother Temple, Besakih. The inhabitants of Lombok are mostly Muslim with a Hindu minority. Lombok remains the most understated of the two islands. Lombok has several temples worthy of a visit, though they are less prolific. Bali and Lombok are neighbouring islands. Nelson Mandela and Martin Luther King Jr. both fought for racial equality. Although Luther King was an American citizen and Mandela a native South African, their dreams were the same. The intolerance of white people towards black co-inhabitants was the catalyst for years of activism. Their battles were tumultuous – Nelson Mandela was arrested in 1962 for treason. Consequently, he was incarcerated for twenty-seven years. In contrast, although Luther King was detained several times, the longest jail sentence he received was four months. Both Mandela and Luther King have been awarded the Nobel Peace Prize for their dedication to improving civil rights for black people. Martin Luther King Jr. led many demonstrations against racism. He delivered his message in a non-violent manner, although other members of his movement later engaged in less peaceful protests. In contrast, Mandela initially avoided violence, but resorted to it following the government’s massacre of unarmed black Africans. Martin Luther King’s famous 1963 speech, “I Have a Dream”, inspired many African-Americans to envisage a better future. He was assassinated in 1968. During Nelson Mandela’s best known speech he recited “Our Deepest Fear”, an inspirational poem written by Marianne Williamson. In 1994, Mandela became the first black president of South Africa; he was the first president elected by the people.' },
-    { id: 'chapter2', title: 'Chapter 2', content: 'Bali and Lombok are neighbouring islands; both are part of the Indonesian archipelago. It is easy to appreciate each island as an attractive tourist destination – majestic scenery; rich culture; white sands and warm, azure waters draw visitors like magnets every year. Snorkelling and diving around the nearby Gili Islands is magnificent, with marine fish, starfish, turtles and coral reef present in abundance. Whereas Bali is predominantly a Hindu country, the inhabitants of Lombok are mostly Muslim with a Hindu minority. Bali is known for its elaborate, traditional dancing which is inspired by its Hindi beliefs. Most of the dancing portrays tales of good versus evil; to watch it is a breathtaking experience. Art is another Balinese passion – batik paintings and carved statues make popular souvenirs. Artists can be seen whittling and painting on the streets, particularly in Ubud. The island is home to some spectacular temples, the most significant being the Mother Temple, Besakih. Lombok, too, has some impressive points of interest – the majestic Gunung Rinjani is an active volcano and the second highest peak in Indonesia. Like Bali, Lombok has several temples worthy of a visit, though they are less prolific. Lombok remains the most understated of the two islands. Several years ago, Channel 4, together with Jo Frost (perhaps better known as Supernanny) conducted an experiment. Forty children, aged six, were invited to a party and divided into two halves. One half was given typical sugary party foods. The other half ate sugar-free foods. The parents were unaware as to which group their child was in. No artificial colourings or flavourings commonly found in sweets were present. Artificial colourings and flavourings have already been linked to hyperactivity. Many parents believe that sugar consumption causes hyperactivity in their children. ‘Sugar highs’ are often blamed for rowdiness or excitability, but is sugar guilty of causing hyperactivity or is it simply a case of ‘normal’ childhood behaviour? As the children ran about and enjoyed the party, the parents were asked whether they believed their own child had been given sugar. The majority believed they had. As the children sat down to watch a magic show, many parents changed their minds. They could not accept that their child was capable of sitting still after consuming sugary foods. The experiment suggested that there was no link between hyperactivity and sugar intake. The children were naturally excited because they were at a party.' },
-    { id: 'chapter3', title: 'Chapter 3', content: 'Martin Luther King Jr. led many demonstrations against racism. He delivered his message in a non-violent manner. Some members of his movement later engaged in less peaceful protests. Luther King was detained several times. The longest jail sentence he received was four months. Martin Luther King’s famous 1963 speech, “I Have a Dream”, inspired many African-Americans to envisage a better future. Luther King was an American citizen. Nelson Mandela is a native South African. Their dreams were the same. Their battles were tumultuous. Nelson Mandela was arrested in 1962 for treason. He was incarcerated for twenty-seven years. Nelson Mandela and Martin Luther King Jr. both fought for racial equality. The intolerance of white people towards black co-inhabitants was the catalyst for years of activism. In 1994, Nelson Mandela became the first black president of South Africa. He was the first president elected by the people. Mandela and Luther King have been awarded the Nobel Peace Prize for their dedication to improving civil rights for black people. During Nelson Mandela’s best known speech in 1994, he recited “Our Deepest Fear”, an inspirational poem by Marianne Williamson. Mandela initially avoided violence but ended up resorting to it following the massacre of unarmed black Africans by the government. Martin Luther King Jr. was assassinated in 1968. Many parents believe that sugar consumption causes hyperactivity in their children. Indeed, ‘sugar highs’ are often blamed for rowdiness or excitability – but is sugar the guilty party, or is it simply a case of ‘normal’ childhood behaviour? Several years ago, Channel 4, together with Jo Frost (perhaps better known as Supernanny) conducted an experiment to distinguish the truth. Forty children, aged six, were invited to a party and divided into two halves. One half was given typical sugary party foods; the other half ate sugar-free alternatives. Crucially, the parents of the children were unaware as to which group their child was in. (Incidentally, no artificial colourings or flavourings commonly found in sweets were present, since these have already been linked to hyperactivity.) Subsequently, as the children ran about and enjoyed the party, the parents were asked whether they believed their own child had been given sugar. The majority believed they had. Ironically, as the children then sat down to watch a magic show, most parents changed their minds. Basically, they could not accept that their child was capable of sitting still after consuming sugary foods. To conclude, the experiment suggested that there was no link between hyperactivity and sugar intake, but that the children were naturally excited because they were at a party.' }
+export class HomeComponent implements AfterViewInit {
+  about = [
+    { id: 'about', title: 'O meni', paragraph1: 'Trenutno studiram na Fakultetu tehničkih nauka u Novom Sadu na smeru Softversko inženjerstvo i informacione tehnologije, gde sam postigla prosek 9.59. Tokom studija i rada, stekla sam iskustvo u programiranju koristeći razne jezike, od kojih su istaknuti Java, Python, C# i JavaScript. Bavila sam se web razvojem koristeći Spring Boot in Angular a mobilne aplikacije sam razvijala u Javi. Takođe, radila sam sa Cloud tehnologijama koristeći Docker i AWS servise.',
+        paragraph2: 'Pored tehničkih veština, posedujem diplomu FCE nivo C1 sa najvišom ocenom, što mi omogućava napredno znanje engleskog jezika.' }
+  ];
+  experiences = [
+    { id: 'Internship', title: 'Praksa', content: '•\tRadila sam na praksi tokom maja i juna 2024. godine gde smo pravili program koji služi za automatsku procenu rizika. Bila sam zadužena za backend koristeći Java Spring.' },
+    { id: 'nti2023', title: 'Takmičenje za najbolju tehnolosku inovaciju 2023', content: '•\tU 2023. godini sam bila mentor srednjoškolskog tima koji je osvojio treće mesto na Takmičenju za Najbolju Tehnološku Inovaciju koje organizuje Ministarstvo nauke, tehnološkog razvoja i inovacija Republike Srbije. Naš projekat je AlgoRythm – program za beskonačno generisanje muzike sa promenljivim parametrima (tonalitet, ključ, ritam…). Moj glavni doprinos je bio razvoj mobiline aplikacije u Unity-ju.' },
+    { id: 'nti2024', title: 'Takmičenje za najbolju tehnolosku inovaciju 2024', content: '•\tU 2024 godini sam se sa timom plasirala u finale Takmičenju za Najbolju Tehnološku Inovaciju za studente koje se održava u novembru. Naš projekat je Akcelerator, program zasnovan na veštačkoj inteligenciji koji služi za adaptivno ubrzavanje video snimaka.' },
+    { id: 'eestech', title: 'EESTech Hackathon', content: '•\tUčestvovala sam na EESTech AI hakatonu na kom sam sa svojim timom napravila mobilnu aplikaciju za lične finansije koja koristi LLM da bi korisniku dala personalizovane savete.'}
+  ];
+  projects = [
+    { id: 'project1', title: 'Booker', content: '•\tNa fakultetu smo tokom petog semestra u tročlanim timovima pravili platformu za rezervacije smeštaja. Ovo je full-stack Spring Boot, Angular i mobilna aplikacija inspirisana Booking-om. ' },
+    { id: 'project2', title: 'Streaming platforma', content: '•\tSa kolegama sam napravila cloud-native platformu za video streaming, inspirisanu Netflixom, koja omogućava korisnicima registraciju, pretragu, pregled, preuzimanje i ocenjivanje video sadržaja, dok administratori upravljaju sadržajem i njegovim transkodiranjem.' },
+    { id: 'project3', title: 'Igrice', content: '•\tSamostalno sam u slobodno vreme napravila dve igrice – jednu u Javi a drugu u Unity-ju (C#). Prva je igrica u kojoj protagonista može da šeta po ostrvu, skuplja powerup-ove i priča sa meštanima. Druga je igrica u kojoj astronaut može da skače sa planete na planetu koristeći rotacionu silu.' }
   ];
 
-  activeChapter = 'chapter1';
+  sections = {
+    about: this.about,
+    experiences: this.experiences,
+    projects: this.projects
+  };
 
-  setInitialActiveChapter() {
-    if (this.chapters.length > 0) {
-      this.activeChapter = this.chapters[0].id;
+  activeSection = '';
+
+  constructor(private cdr: ChangeDetectorRef) {}
+
+  ngAfterViewInit() {
+    this.setInitialActiveSection();
+  }
+
+  setInitialActiveSection() {
+    if (this.about.length > 0) {
+      this.activeSection = 'about';
+      this.cdr.detectChanges();
     }
   }
 
-  @HostListener('scroll', ['$event'])
-  onScroll(event: any) {
-    const content = event.target;
+  @HostListener('window:scroll', ['$event'])
+  onScroll(event: Event) {
+    const content = document.querySelector('.content') as HTMLElement;
     const scrollTop = content.scrollTop;
     const viewportHeight = content.clientHeight;
-    let newActiveChapter = '';
 
-    this.chapters.forEach(chapter => {
-      const element = document.getElementById(chapter.id);
-      if (element) {
-        const rect = element.getBoundingClientRect();
-        const elementTop = rect.top + scrollTop;
-        const elementHeight = rect.height;
+    let newActiveSection = '';
 
-        if (elementTop < (scrollTop + viewportHeight / 2) &&
-          (elementTop + elementHeight) > (scrollTop + viewportHeight / 2)) {
-          newActiveChapter = chapter.id;
+    if (scrollTop === 0) {
+      newActiveSection = 'about';
+    } else {
+      // Loop through sections to determine the active one
+      Object.keys(this.sections).forEach(section => {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const elementTop = rect.top + scrollTop;
+          const elementHeight = rect.height;
+
+          // Check if the element is in the viewport
+          if (elementTop < (scrollTop + viewportHeight / 2) &&
+            (elementTop + elementHeight) > (scrollTop + viewportHeight / 2)) {
+            newActiveSection = section;
+          }
         }
-      }
-    });
+      });
+    }
 
-    if (this.activeChapter !== newActiveChapter) {
-      this.activeChapter = newActiveChapter;
+    if (this.activeSection !== newActiveSection) {
+      this.activeSection = newActiveSection;
     }
   }
 
-  scrollTo(chapterId: string) {
-    const element = document.getElementById(chapterId);
+  scrollTo(section: string) {
+    const element = document.getElementById(section);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      //this.activeChapter = chapterId;
+      this.activeSection = section;
     }
   }
 }

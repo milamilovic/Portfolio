@@ -1,16 +1,43 @@
 <div class="container">
   <nav class="chapter-nav">
+    <h3>Mila Milović</h3>
+    <p>Student softverskog inženjerstva</p>
     <ul>
-      <li *ngFor="let chapter of chapters" [class.active]="activeChapter === chapter.id">
-        <a (click)="scrollTo(chapter.id)">{{ chapter.title }}</a>
+      <li [class.active]="activeSection === 'about'">
+        <a (click)="scrollTo('about')">About</a>
+      </li>
+      <li [class.active]="activeSection === 'experiences'">
+        <a (click)="scrollTo('experiences')">Experiences</a>
+      </li>
+      <li [class.active]="activeSection === 'projects'">
+        <a (click)="scrollTo('projects')">Projects</a>
       </li>
     </ul>
   </nav>
 
   <div class="content" (scroll)="onScroll($event)">
-    <section *ngFor="let chapter of chapters" [id]="chapter.id">
-      <h2>{{ chapter.title }}</h2>
-      <p>{{ chapter.content }}</p>
+    <section id="about">
+      <h2>About</h2>
+      <div *ngFor="let card of about" class="card">
+        <p>{{ card.paragraph1 }}</p>
+        <p>{{ card.paragraph2 }}</p>
+      </div>
+    </section>
+
+    <section id="experiences">
+      <h2>Experiences</h2>
+      <div *ngFor="let card of experiences" class="card">
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.content }}</p>
+      </div>
+    </section>
+
+    <section id="projects">
+      <h2>Projects</h2>
+      <div *ngFor="let card of projects" class="card">
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.content }}</p>
+      </div>
     </section>
   </div>
 </div>
