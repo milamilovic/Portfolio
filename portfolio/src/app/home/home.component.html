@@ -1,6 +1,6 @@
 <div id="glowEffect"></div>
 <div class="container">
-  <nav class="chapter-nav">
+  <nav class="chapter-nav"  (scroll)="onScroll($event)">
     <h3>Mila Milović</h3>
     <p>Student softverskog inženjerstva</p>
     <ul>
@@ -19,10 +19,10 @@
   <div class="content" (scroll)="onScroll($event)">
     <div id="top"></div>
     <section id="about">
-      <h2>About</h2>
-      <div *ngFor="let card of about" class="card">
-        <p>{{ card.paragraph1 }}</p>
-        <p>{{ card.paragraph2 }}</p>
+      <!--<h2>About</h2>-->
+      <div *ngFor="let paragraph of about">
+        <p class="about-paragraph">{{ paragraph.paragraph1 }}</p>
+        <p class="about-paragraph">{{ paragraph.paragraph2 }}</p>
       </div>
     </section>
 
@@ -36,7 +36,7 @@
 
     <section id="projects">
       <h2>Projects</h2>
-      <div *ngFor="let card of projects" class="card">
+      <div *ngFor="let card of projects" class="card" id="project" (click)="redirectToLink(card.link)">
         <h3>{{ card.title }}</h3>
         <p>{{ card.content }}</p>
       </div>

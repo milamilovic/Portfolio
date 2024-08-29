@@ -5,9 +5,17 @@ html, body {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: #0a192f;
   overflow: hidden;
+}
+
+p, h1, h2, h3, h4, h5, h6, a {
+  cursor: default;
 }
 
 .container {
@@ -19,12 +27,13 @@ body {
 }
 
 .chapter-nav {
-  width: 50%;
+  width: 45%;
   position: sticky;
   top: 0;
   background-color: #0a192f;
   color: #6c7b8b;
   padding: 20px;
+  padding-left: 5%;
   overflow-y: auto;
 }
 
@@ -44,9 +53,10 @@ body {
 
 /* Content Area */
 .content {
-  width: 50%;
+  width: 45%;
   overflow-y: auto;
   padding: 20px;
+  padding-right: 5%;
   color: #9a9fbf;
   background-color: #0a192f;
 }
@@ -69,4 +79,68 @@ section {
   z-index: 1000; /* Ensure it's above all content */
   top: 0;
   left: 0;
+}
+
+#about {
+  padding-top: 50px;
+  padding-bottom: 50px;
+}
+
+#about p {
+  font-size: 120%;
+  text-align: left; /* Centers the text within the paragraph */
+}
+
+.about-paragraph {
+  padding: 20px;
+}
+
+/* Card Styling */
+.card {
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0; /* Increased margin */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease; /* Smooth transition for hover effects */
+  color: #d0d8f3;
+}
+
+.card:hover {
+  transform: translateY(-2px); /* Slight lift on hover */
+  box-shadow: 0 4px 6px rgba(10, 10, 10, 0.1);
+  background-color: #112240;
+  border: 1px solid #112240; /* Border on hover */
+  border-top: 1px solid #233554; /* Border on hover */
+  & h3 {
+    color: 	#d0d8f3;
+  }
+}
+
+/* Additional Adjustments */
+section h2 {
+  color: #d0d8f3;
+  margin-bottom: 20px;
+}
+
+.card h3 {
+  color: #d0d8f3;
+  margin-bottom: 15px;
+}
+
+#project:hover {
+  cursor: pointer;
+  & p, & h1, & h2, & h3, & h4, & h5, & h6 {
+    cursor: pointer;
+  }
+}
+
+#project h3::after {
+  content: '↗'; /* Unicode arrow character */
+  display: inline-block;
+  margin-left: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#project:hover h3::after {
+  opacity: 1;
 }

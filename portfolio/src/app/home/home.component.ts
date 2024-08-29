@@ -12,19 +12,59 @@ import {NgForOf} from "@angular/common";
 })
 export class HomeComponent implements AfterViewInit {
   about = [
-    { id: 'about', title: 'O meni', paragraph1: 'Trenutno studiram na Fakultetu tehničkih nauka u Novom Sadu na smeru Softversko inženjerstvo i informacione tehnologije, gde sam postigla prosek 9.59. Tokom studija i rada, stekla sam iskustvo u programiranju koristeći razne jezike, od kojih su istaknuti Java, Python, C# i JavaScript. Bavila sam se web razvojem koristeći Spring Boot in Angular a mobilne aplikacije sam razvijala u Javi. Takođe, radila sam sa Cloud tehnologijama koristeći Docker i AWS servise.',
-        paragraph2: 'Pored tehničkih veština, posedujem diplomu FCE nivo C1 sa najvišom ocenom, što mi omogućava napredno znanje engleskog jezika.' }
+    { id: 'about',
+      title: 'O meni',
+      paragraph1: 'Trenutno studiram na Fakultetu tehničkih nauka u Novom Sadu na smeru Softversko inženjerstvo i informacione tehnologije. Upisala sam četvrtu godiunu i postigla prosek 9.59. Tokom studija i rada, stekla sam iskustvo u programiranju koristeći razne jezike, od kojih su istaknuti Java, Python, C# i JavaScript. Bavila sam se web razvojem koristeći Spring Boot in Angular a mobilne aplikacije sam razvijala u Javi. Takođe, radila sam sa Cloud tehnologijama koristeći Docker i AWS servise.',
+      paragraph2: 'Pored tehničkih veština, posedujem diplomu FCE nivo C1 sa najvišom ocenom, što mi omogućava napredno znanje engleskog jezika.'
+    }
   ];
   experiences = [
-    { id: 'Internship', title: 'Praksa', content: '•\tRadila sam na praksi tokom maja i juna 2024. godine gde smo pravili program koji služi za automatsku procenu rizika. Bila sam zadužena za backend koristeći Java Spring.' },
-    { id: 'nti2023', title: 'Takmičenje za najbolju tehnolosku inovaciju 2023', content: '•\tU 2023. godini sam bila mentor srednjoškolskog tima koji je osvojio treće mesto na Takmičenju za Najbolju Tehnološku Inovaciju koje organizuje Ministarstvo nauke, tehnološkog razvoja i inovacija Republike Srbije. Naš projekat je AlgoRythm – program za beskonačno generisanje muzike sa promenljivim parametrima (tonalitet, ključ, ritam…). Moj glavni doprinos je bio razvoj mobiline aplikacije u Unity-ju.' },
-    { id: 'nti2024', title: 'Takmičenje za najbolju tehnolosku inovaciju 2024', content: '•\tU 2024 godini sam se sa timom plasirala u finale Takmičenju za Najbolju Tehnološku Inovaciju za studente koje se održava u novembru. Naš projekat je Akcelerator, program zasnovan na veštačkoj inteligenciji koji služi za adaptivno ubrzavanje video snimaka.' },
-    { id: 'eestech', title: 'EESTech Hackathon', content: '•\tUčestvovala sam na EESTech AI hakatonu na kom sam sa svojim timom napravila mobilnu aplikaciju za lične finansije koja koristi LLM da bi korisniku dala personalizovane savete.'}
+    {
+      id: 'Internship',
+      title: 'Praksa',
+      content: '•\tRadila sam na praksi tokom maja i juna 2024. godine gde smo pravili program koji služi za automatsku procenu rizika. Bila sam zadužena za backend koristeći Java Spring.'
+    },
+    {
+      id: 'nti2023',
+      title: 'Takmičenje za najbolju tehnolosku inovaciju 2023',
+      content: '•\tU 2023. godini sam bila mentor srednjoškolskog tima koji je osvojio treće mesto na Takmičenju za Najbolju Tehnološku Inovaciju koje organizuje Ministarstvo nauke, tehnološkog razvoja i inovacija Republike Srbije. Naš projekat je AlgoRythm – program za beskonačno generisanje muzike sa promenljivim parametrima (tonalitet, ključ, ritam…). Moj glavni doprinos je bio razvoj mobiline aplikacije u Unity-ju.'
+    },
+    {
+      id: 'nti2024',
+      title: 'Takmičenje za najbolju tehnolosku inovaciju 2024',
+      content: '•\tU 2024 godini sam se sa timom plasirala u finale Takmičenju za Najbolju Tehnološku Inovaciju za studente koje se održava u novembru. Naš projekat je Akcelerator, program zasnovan na veštačkoj inteligenciji koji služi za adaptivno ubrzavanje video snimaka.'
+    },
+    {
+      id: 'eestech',
+      title: 'EESTech Hackathon',
+      content: '•\tUčestvovala sam na EESTech AI hakatonu na kom sam sa svojim timom napravila mobilnu aplikaciju za lične finansije koja koristi LLM da bi korisniku dala personalizovane savete.'
+    }
   ];
   projects = [
-    { id: 'project1', title: 'Booker', content: '•\tNa fakultetu smo tokom petog semestra u tročlanim timovima pravili platformu za rezervacije smeštaja. Ovo je full-stack Spring Boot, Angular i mobilna aplikacija inspirisana Booking-om. ' },
-    { id: 'project2', title: 'Streaming platforma', content: '•\tSa kolegama sam napravila cloud-native platformu za video streaming, inspirisanu Netflixom, koja omogućava korisnicima registraciju, pretragu, pregled, preuzimanje i ocenjivanje video sadržaja, dok administratori upravljaju sadržajem i njegovim transkodiranjem.' },
-    { id: 'project3', title: 'Igrice', content: '•\tSamostalno sam u slobodno vreme napravila dve igrice – jednu u Javi a drugu u Unity-ju (C#). Prva je igrica u kojoj protagonista može da šeta po ostrvu, skuplja powerup-ove i priča sa meštanima. Druga je igrica u kojoj astronaut može da skače sa planete na planetu koristeći rotacionu silu.' }
+    {
+      id: 'project1',
+      link: 'https://github.com/orgs/booker-project-app/repositories',
+      title: 'Booker',
+      content: '•\tNa fakultetu smo tokom petog semestra u tročlanim timovima pravili platformu za rezervacije smeštaja. Ovo je full-stack Spring Boot, Angular i mobilna aplikacija inspirisana Booking-om. '
+    },
+    {
+      id: 'project2',
+      link: 'https://github.com/milamilovic/Netflix',
+      title: 'Streaming platforma',
+      content: '•\tSa kolegama sam napravila cloud-native platformu za video streaming, inspirisanu Netflixom, koja omogućava korisnicima registraciju, pretragu, pregled, preuzimanje i ocenjivanje video sadržaja, dok administratori upravljaju sadržajem i njegovim transkodiranjem.'
+    },
+    {
+      id: "game1",
+      link: "https://github.com/milamilovic/Put_po_Srbiji",
+      title: "Istraživanje Ostrva",
+      content: "•\tSamostalno razvijena igra u Javi u kojoj igrač istržuje ostrvo. Igrač može da šeta po ostrvu, prikuplja power-up-ove i razgovara sa meštanima."
+    },
+    {
+      id: "game2",
+      link: "https://github.com/milamilovic/AstroSpin",
+      title: "AstroSpin",
+      content: "•\tRazvijena u Unity-ju koristeći C#, igrica omogućava igračima da upravljaju astronautom koji skače sa planete na planetu koristeći rotacionu silu."
+    }
   ];
 
   sections = {
@@ -97,21 +137,20 @@ export class HomeComponent implements AfterViewInit {
     }
   }
 
-  scrollTo(section: string) {
-    if (section === 'about') {
-      // Scroll to the top of the page
-      let top = document.getElementById('top');
-      if (top !== null) {
-        top.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        top = null;
-      }
-      this.activeSection = section;
-    } else {
-      const element = document.getElementById(section);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        this.activeSection = section;
-      }
+  redirectToLink(link: string) {
+    window.location.href = link;
+  }
+
+  scrollTo(sectionId: string) {
+    const content = document.querySelector('.content') as HTMLElement;
+    const targetElement = document.getElementById(sectionId);
+
+    if (content && targetElement) {
+      const targetPosition = targetElement.offsetTop;
+      content.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth'
+      });
     }
   }
 }
