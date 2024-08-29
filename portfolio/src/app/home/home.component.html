@@ -6,13 +6,13 @@
     <p>Student softverskog inženjerstva</p>
     <ul>
       <li [class.active]="activeSection === 'about'">
-        <a (click)="scrollTo('about')">About</a>
+        <a (click)="scrollTo('about')">O meni</a>
       </li>
       <li [class.active]="activeSection === 'experiences'">
-        <a (click)="scrollTo('experiences')">Experiences</a>
+        <a (click)="scrollTo('experiences')">Iskustvo</a>
       </li>
       <li [class.active]="activeSection === 'projects'">
-        <a (click)="scrollTo('projects')">Projects</a>
+        <a (click)="scrollTo('projects')">Projekti</a>
       </li>
     </ul>
     <div class="social-icons">
@@ -36,7 +36,7 @@
     </section>
 
     <section id="experiences">
-      <h2>Experiences</h2>
+      <h2>Iskustvo</h2>
       <div *ngFor="let card of experiences" class="card">
         <h3>{{ card.title }}</h3>
         <p>{{ card.content }}</p>
@@ -44,7 +44,7 @@
     </section>
 
     <section id="projects">
-      <h2>Projects</h2>
+      <h2>Projekti</h2>
       <div *ngFor="let card of projects" class="card" id="project" (click)="redirectToLink(card.link)">
         <h3>{{ card.title }}</h3>
         <p>{{ card.content }}</p>
