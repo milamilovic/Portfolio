@@ -39,12 +39,28 @@ export class HomeComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.setInitialActiveSection();
+
+    // Initialize glow element position after the view is rendered
+    const glowElement = document.getElementById('glowEffect');
+    if (glowElement) {
+      glowElement.style.transform = `translate(-600px, -600px)`;
+    }
   }
 
   setInitialActiveSection() {
     if (this.about.length > 0) {
       this.activeSection = 'about';
       this.cdr.detectChanges();
+    }
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    const glowElement = document.getElementById('glowEffect');
+    if (glowElement) {
+      // Subtract half of the glow's width and height to center it on the mouse
+      const glowSize = 600; // Glow element's size (width/height)
+      glowElement.style.transform = `translate(${event.clientX - glowSize / 2}px, ${event.clientY - glowSize / 2}px)`;
     }
   }
 
