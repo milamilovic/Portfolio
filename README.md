@@ -2,7 +2,7 @@
 Code for my portfolio website
 
 ## Tech stack
-Built in angular and will be deployed on AWS, domain bought on Squarespace
+Built in angular and hosted on Github Pages, domain bought on Squarespace
 
 ## Color scheme
 | Color Name        | Hex Code | Sample   |
