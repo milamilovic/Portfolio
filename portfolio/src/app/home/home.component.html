@@ -1,59 +1,195 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<div id="glowEffect"></div>
-<div class="container">
-  <nav class="chapter-nav"  (scroll)="onScroll($event)">
-    <h3>Mila Milović</h3>
-    <p>{{ t(ui.subtitle) }}</p>
-    <ul>
-      <li [class.active]="activeSection === 'about'">
-        <a (click)="scrollTo('about')">{{ t(ui.navAbout) }}</a>
-      </li>
-      <li [class.active]="activeSection === 'experiences'">
-        <a (click)="scrollTo('experiences')">{{ t(ui.navExperience) }}</a>
-      </li>
-      <li [class.active]="activeSection === 'projects'">
-        <a (click)="scrollTo('projects')">{{ t(ui.navProjects) }}</a>
-      </li>
-    </ul>
-    <div class="social-icons">
-      <a href="https://github.com/milamilovic" target="_blank" title="GitHub">
-        <i class="fab fa-github"></i>
-      </a>
-      <a href="https://www.linkedin.com/in/mila-milovic-453189213/" target="_blank" title="LinkedIn">
-        <i class="fab fa-linkedin"></i>
-      </a>
-    </div>
-    <div class="lang-switch" role="group" [attr.aria-label]="t(ui.switchTo)">
-      <button type="button" lang="en" [class.active]="lang === 'en'" [attr.aria-pressed]="lang === 'en'" (click)="setLang('en')">EN</button>
-      <span aria-hidden="true">/</span>
-      <button type="button" lang="sr" [class.active]="lang === 'sr'" [attr.aria-pressed]="lang === 'sr'" (click)="setLang('sr')">SR</button>
-    </div>
-  </nav>
+<div class="glow" #glow aria-hidden="true"></div>
 
-  <div class="content" (scroll)="onScroll($event)">
-    <div id="top"></div>
-    <section id="about">
-      <!--<h2>About</h2>-->
-      <div *ngFor="let paragraph of about">
-        <p class="about-paragraph">{{ t(paragraph.paragraph1) }}</p>
-        <p class="about-paragraph">{{ t(paragraph.paragraph2) }}</p>
+<div class="layout">
+  <aside class="sidebar">
+    <header class="intro">
+      <h1>Mila Milović</h1>
+      <p class="subtitle">{{ t(ui.subtitle) }}</p>
+    </header>
+
+    <nav class="section-nav" #sectionNav [attr.aria-label]="t(ui.navLabel)">
+      <ul>
+        @for (s of sections; track s.id) {
+          <li>
+            <a [href]="'#' + s.id"
+               [class.active]="activeSection === s.id"
+               [attr.aria-current]="activeSection === s.id ? 'true' : null"
+               (click)="goTo(s.id, $event)">{{ t(s.label) }}</a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="social-icons">
+        <a href="https://github.com/milamilovic" target="_blank" rel="noopener noreferrer">
+          <i class="fab fa-github" aria-hidden="true"></i><span>GitHub</span>
+        </a>
+        <a href="https://www.linkedin.com/in/mila-milovic-453189213/" target="_blank" rel="noopener noreferrer">
+          <i class="fab fa-linkedin" aria-hidden="true"></i><span>LinkedIn</span>
+        </a>
       </div>
+      <div class="lang-switch" role="group" [attr.aria-label]="t(ui.switchLang)">
+        <button type="button" lang="en" [class.active]="lang === 'en'" [attr.aria-pressed]="lang === 'en'" (click)="setLang('en')">EN</button>
+        <span aria-hidden="true">/</span>
+        <button type="button" lang="sr" [class.active]="lang === 'sr'" [attr.aria-pressed]="lang === 'sr'" (click)="setLang('sr')">SR</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <section id="about">
+      <h2>{{ heading('about') }}</h2>
+      @for (p of about; track $index) {
+        <p class="about-text">{{ t(p) }}</p>
+      }
     </section>
 
-    <section id="experiences">
-      <h2>{{ t(ui.experienceHeading) }}</h2>
-      <div *ngFor="let card of experiences" class="card">
-        <h3>{{ t(card.title) }}</h3>
-        <p>{{ t(card.content) }}</p>
-      </div>
+    <section id="experience">
+      <h2>{{ heading('experience') }}</h2>
+      <ol class="entries">
+        @for (e of experience; track e.id) {
+          <li class="entry">
+            <div class="entry-label">{{ t(e.period) }}</div>
+            <div class="entry-body">
+              <h3>{{ t(e.role) }}</h3>
+              @if (e.org) {
+                <p class="entry-org">{{ t(e.org) }}</p>
+              }
+              <ul class="bullets">
+                @for (b of e.bullets[lang]; track $index) {
+                  <li>{{ b }}</li>
+                }
+              </ul>
+              @if (e.tags?.length) {
+                <ul class="tags">
+                  @for (tag of e.tags; track tag) {
+                    <li>{{ tag }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          </li>
+        }
+      </ol>
     </section>
 
     <section id="projects">
-      <h2>{{ t(ui.projectsHeading) }}</h2>
-      <div *ngFor="let card of projects" class="card project" [class.no-link]="!card.link" (click)="redirectToLink(card.link)">
-        <h3>{{ t(card.title) }}</h3>
-        <p>{{ t(card.content) }}</p>
-      </div>
+      <h2>{{ heading('projects') }}</h2>
+
+      @if (showFilters) {
+        <div class="filters" role="group" [attr.aria-label]="t(ui.filterLabel)">
+          @for (f of filters; track f.id) {
+            <button type="button" class="chip"
+                    [class.active]="filter === f.id"
+                    [attr.aria-pressed]="filter === f.id"
+                    (click)="setFilter(f.id)">
+              {{ t(f.label) }} <span class="count">{{ count(f.id) }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      <ul class="projects">
+        @for (p of visibleProjects; track p.id) {
+          <li>
+            <article class="project" [class.has-link]="p.link" [class.has-image]="hasImage(p)">
+              @if (p.image) {
+                <!-- hidden (not removed) if the file is missing, so a forgotten screenshot never shows a broken icon -->
+                <img class="project-media" [src]="p.image" [alt]="t(p.imageAlt ?? p.title)"
+                     width="352" height="220" loading="lazy" decoding="async"
+                     [hidden]="!hasImage(p)" (error)="onImageError(p)">
+              }
+              <div class="project-text">
+                <div class="project-head">
+                  <h3>
+                    @if (p.link) {
+                      <a class="project-link" [href]="p.link" target="_blank" rel="noopener noreferrer" [attr.title]="t(ui.viewOnGithub)">{{ t(p.title) }}<span class="arrow" aria-hidden="true">↗</span></a>
+                    } @else {
+                      {{ t(p.title) }}
+                    }
+                  </h3>
+                  @if (p.badge) {
+                    <span class="badge">{{ t(p.badge) }}</span>
+                  }
+                </div>
+                <p class="project-summary">{{ t(p.summary) }}</p>
+                @if (p.highlight) {
+                  <p class="project-highlight">{{ t(p.highlight) }}</p>
+                }
+                <ul class="tags">
+                  @for (tag of p.tags; track tag) {
+                    <li>{{ tag }}</li>
+                  }
+                </ul>
+              </div>
+            </article>
+          </li>
+        }
+      </ul>
+
+      @if (collapsible) {
+        <button type="button" class="more" (click)="toggleShowAll()">
+          {{ showAll ? t(ui.showLess) : showAllLabel() }}
+          <span class="more-arrow" aria-hidden="true">{{ showAll ? '↑' : '↓' }}</span>
+        </button>
+      }
     </section>
-  </div>
+
+    <section id="education">
+      <h2>{{ heading('education') }}</h2>
+      <ol class="entries">
+        @for (e of education; track e.id) {
+          <li class="entry">
+            <div class="entry-label">{{ t(e.period) }}</div>
+            <div class="entry-body">
+              <h3>{{ t(e.role) }}</h3>
+              @if (e.org) {
+                <p class="entry-org">{{ t(e.org) }}</p>
+              }
+              <ul class="bullets">
+                @for (b of e.bullets[lang]; track $index) {
+                  <li>{{ b }}</li>
+                }
+              </ul>
+            </div>
+          </li>
+        }
+      </ol>
+    </section>
+
+    <section id="skills">
+      <h2>{{ heading('skills') }}</h2>
+      <ul class="entries">
+        @for (g of skills; track g.id) {
+          <li class="entry">
+            <div class="entry-label">{{ t(g.title) }}</div>
+            <div class="entry-body">
+              <ul class="tags tags-plain">
+                @for (item of g.items; track $index) {
+                  <li>{{ t(item) }}</li>
+                }
+              </ul>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section id="awards">
+      <h2>{{ heading('awards') }}</h2>
+      <ul class="entries">
+        @for (a of awards; track a.id) {
+          <li class="entry">
+            <div class="entry-label">{{ t(a.label) }}</div>
+            <div class="entry-body">
+              <h3>{{ t(a.title) }}</h3>
+              <p class="entry-text">{{ t(a.description) }}</p>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  </main>
 </div>

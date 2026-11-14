@@ -1,318 +1,363 @@
-import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener} from '@angular/core';
-import {NgForOf} from "@angular/common";
+import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, ViewChild} from '@angular/core';
 
 type Lang = 'en' | 'sr';
 type Localized = Record<Lang, string>;
+type Category = 'games' | 'ai' | 'systems';
+type Filter = 'all' | Category;
 
-interface Card {
+interface Entry {
+  id: string;
+  role: Localized;
+  org?: Localized;
+  period: Localized;
+  bullets: Record<Lang, string[]>;
+  tags?: string[];
+}
+
+interface Project {
   id: string;
   title: Localized;
-  content: Localized;
+  summary: Localized;
+  highlight?: Localized;
+  badge?: Localized;
+  tags: string[];
+  category: Category;
+  link?: string;
+  image?: string;
+  imageAlt?: Localized;
 }
 
-interface Project extends Card {
-  link?: string;
+interface Award {
+  id: string;
+  label: Localized;
+  title: Localized;
+  description: Localized;
 }
+
+interface SkillGroup {
+  id: string;
+  title: Localized;
+  items: Localized[];
+}
+
+const L = (en: string, sr: string): Localized => ({ en, sr });
+const same = (text: string): Localized => ({ en: text, sr: text });
+const LB = (en: string[], sr: string[]): Record<Lang, string[]> => ({ en, sr });
+
+const INITIAL_PROJECTS = 8;
 
 @Component({
   selector: 'app-home',
-  imports: [NgForOf],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
-export class HomeComponent implements AfterViewInit {
+export class HomeComponent implements AfterViewInit, OnDestroy {
   lang: Lang = 'en';
 
   ui = {
-    subtitle: {
-      en: 'Software engineer and PhD student',
-      sr: 'Softverski inženjer i doktorand'
-    } as Localized,
-    navAbout: { en: 'About me', sr: 'O meni' } as Localized,
-    navExperience: { en: 'Experience & achievements', sr: 'Iskustvo i priznanja' } as Localized,
-    navProjects: { en: 'Projects', sr: 'Projekti' } as Localized,
-    experienceHeading: { en: 'Experience & achievements', sr: 'Iskustvo i priznanja' } as Localized,
-    projectsHeading: { en: 'Projects', sr: 'Projekti' } as Localized,
-    switchTo: { en: 'Switch language', sr: 'Promeni jezik' } as Localized
+    subtitle: L('Software engineer and PhD student', 'Softverski inženjer i student doktorskih studija'),
+    navLabel: L('Sections', 'Sekcije'),
+    switchLang: L('Switch language', 'Promeni jezik'),
+    filterLabel: L('Filter projects', 'Filtriraj projekte'),
+    showAll: L('Show all {n} projects', 'Prikaži svih {n} projekata'),
+    showLess: L('Show fewer projects', 'Prikaži manje projekata'),
+    viewOnGithub: L('View on GitHub', 'Pogledaj na GitHub-u')
   };
 
-  about: { id: string; paragraph1: Localized; paragraph2: Localized }[] = [
-    {
-      id: 'about',
-      paragraph1: {
-        en: 'I\'m a PhD student at the Faculty of Technical Sciences in Novi Sad, where I research legacy systems. I completed my MSc in Software Engineering (Multimedia Systems and Computer Games module) with a GPA of 10.0, after a BSc with a GPA of 9.69. My MSc thesis is a tool for analyzing legacy code with a locally run LLM, and it also became a published paper. Alongside my research, I work as a teaching assistant at the faculty, teaching server-side programming, web programming and the Internet of Things.',
-        sr: 'Doktorand sam na Fakultetu tehničkih nauka u Novom Sadu, gde istražujem legacy sisteme. Master studije softverskog inženjerstva, modul Multimedijalni sistemi i računarske igre, završila sam sa prosekom 10,0, a osnovne sa 9,69. Moj master rad je alat za analizu legacy koda pomoću lokalno pokretanog LLM-a, a iz njega je nastao i naučni rad. Pored istraživanja, radim kao asistent na fakultetu i držim vežbe iz serverskog i web programiranja i Interneta stvari.'
-      },
-      paragraph2: {
-        en: 'I mostly program in Python and C++, and I also work in Java (Spring Boot), JavaScript (React, Angular) and C#. I work on machine learning, computer vision and computer graphics, and I build games in Unity. I\'ve also worked with Docker and AWS. I hold a Cambridge CAE certificate (level C2).',
-        sr: 'Najviše programiram u Python-u i C++-u, a radim i u Javi (Spring Boot), JavaScript-u (React, Angular) i C#-u. Bavim se mašinskim učenjem, računarskom vizijom i računarskom grafikom, a igre pravim u Unity-ju. Radila sam i sa Docker-om i AWS servisima. Imam Cambridge CAE sertifikat (nivo C2), što potvrđuje moje napredno znanje engleskog jezika.'
-      }
-    }
+  sections: { id: string; label: Localized; heading: Localized }[] = [
+    { id: 'about',      label: L('About', 'O meni'),             heading: L('About me', 'O meni') },
+    { id: 'experience', label: L('Experience', 'Iskustvo'),       heading: L('Experience', 'Iskustvo') },
+    { id: 'projects',   label: L('Projects', 'Projekti'),         heading: L('Projects', 'Projekti') },
+    { id: 'education',  label: L('Education', 'Obrazovanje'),     heading: L('Education', 'Obrazovanje') },
+    { id: 'skills',     label: L('Skills', 'Veštine'),            heading: L('Skills', 'Veštine') },
+    { id: 'awards',     label: L('Competitions', 'Takmičenja'),   heading: L('Competitions', 'Takmičenja') }
   ];
 
-  experiences: Card[] = [
+  heading(id: string): string {
+    return this.t(this.sections.find(s => s.id === id)!.heading);
+  }
+
+  about: Localized[] = [
+    L(
+      'I\'m a PhD student at the Faculty of Technical Sciences in Novi Sad, where I research legacy systems. I completed my MSc in Software Engineering (Multimedia Systems and Computer Games module) with a GPA of 10.0, after a BSc with a GPA of 9.69. My MSc thesis is a tool for analyzing legacy code. Alongside that, I work as a teaching assistant at the faculty, teaching web programming and the Internet of Things.',
+      'Student sam doktorskih studija na Fakultetu tehničkih nauka u Novom Sadu, gde istražujem legacy sisteme. Master studije softverskog inženjerstva, modul Multimedijalni sistemi i računarske igre, završila sam sa prosekom 10,0, a osnovne sa 9,69. Moj master rad je alat za analizu legacy koda. Pored toga, radim kao asistent na fakultetu i držim vežbe iz web programiranja i Interneta stvari (IoT).'
+    )
+  ];
+
+  experience: Entry[] = [
     {
       id: 'ta',
-      title: {
-        en: 'Teaching assistant, Faculty of Technical Sciences (November 2025 – present)',
-        sr: 'Asistent, Fakultet tehničkih nauka (novembar 2025 – danas)'
-      },
-      content: {
-        en: '•\tIn 2026/27 (first semester) I teach Server-Side Engineering (Spring Boot) and Internet of Things (sensors, actuators and Raspberry Pi programmed in Python). In 2025/26 I taught Introduction to Computing and Programming for Biomedical Engineering (Python), Server-Side Engineering (Spring Boot) and Web Programming on two study programs (dynamic web programming in Java with React, and Spring Boot with Vue).',
-        sr: '•\tU školskoj 2026/27. godini (prvi semestar) držim vežbe iz Serverskog inženjerstva (Spring Boot) i Interneta stvari (senzori, aktuatori i Raspberry Pi programiran u Python-u). U 2025/26. držala sam vežbe iz Uvoda u računarstvo i programiranje za biomedicinsko inženjerstvo (Python), Serverskog inženjerstva (Spring Boot) i Web programiranja na dva studijska programa (dinamičko web programiranje u Javi sa React-om i Spring Boot sa Vue-om).'
-      }
+      role: L('Teaching assistant', 'Asistent'),
+      org: L('Faculty of Technical Sciences', 'Fakultet tehničkih nauka'),
+      period: L('Nov 2025 – Present', 'nov 2025 – danas'),
+      bullets: LB(
+        [
+          'I teach Server-Side Engineering, Web programming and Internet of Things.',
+          'I also taught Introduction to Computing and Programming.'
+        ],
+        [
+          'Držim vežbe iz Inženjerstva serverskog sloja, Web programiranja i Interneta stvari (IoT).',
+          'Držala sam vežbe iz Uvoda u računarstvo i programiranje.'
+        ]
+      ),
+      tags: ['Spring Boot', 'Python', 'React', 'Vue', 'Raspberry Pi']
     },
     {
       id: 'codolis',
-      title: {
-        en: 'Software engineer, Codolis (February – August 2025)',
-        sr: 'Softverski inženjer, Codolis (februar – avgust 2025)'
-      },
-      content: {
-        en: '•\tBuilt a platform for tracking the progress of young skiers for a client in Austria: backend in Java Spring, frontend in React. Led and mentored an intern on the project: onboarding, code review and task distribution.',
-        sr: '•\tRazvijala sam platformu za praćenje napretka mladih skijaša za klijenta iz Austrije: backend u Java Spring-u, frontend u React-u. Bila sam mentor stažisti na projektu: uvođenje u posao, code review i raspodela zadataka.'
-      }
+      role: L('Software engineer', 'Softverski inženjer'),
+      org: same('Codolis'),
+      period: L('Feb – Aug 2025', 'feb – avg 2025'),
+      bullets: LB(
+        [
+          'Built a platform for tracking the progress of young skiers for a client in Austria',
+          'Backend in Java Spring, frontend in React',
+          'Led and mentored an intern on the project: onboarding, code review and task distribution'
+        ],
+        [
+          'Razvijala sam platformu za praćenje napretka mladih skijaša za klijenta iz Austrije',
+          'Backend u Java Spring-u, frontend u React-u',
+          'Bila sam mentor stažisti na projektu: uvođenje u posao, code review i raspodela zadataka'
+        ]
+      ),
+      tags: ['Java', 'Spring', 'React']
     },
     {
       id: 'internship',
-      title: {
-        en: 'Software engineering intern, Student ventures (May – November 2024)',
-        sr: 'Praksa, Student ventures (maj – novembar 2024)'
-      },
-      content: {
-        en: '•\tBuilt the Java Spring backend of a risk assessment application for evaluating money-laundering risk.',
-        sr: '•\tRazvila sam Java Spring backend aplikacije za procenu rizika od pranja novca.'
-      }
-    },
-    {
-      id: 'paper',
-      title: {
-        en: 'Publication (2026)',
-        sr: 'Naučni rad (2026)'
-      },
-      content: {
-        en: '•\tM. Milović, "Oracle Forms and Reports Legacy Code Analysis for Modernization", Zbornik radova Fakulteta tehničkih nauka, Novi Sad, 2026. The paper grew out of my MSc thesis.',
-        sr: '•\tM. Milović, „Oracle Forms and Reports Legacy Code Analysis for Modernization“, Zbornik radova Fakulteta tehničkih nauka, Novi Sad, 2026. Rad je nastao iz mog master rada.'
-      }
-    },
-    {
-      id: 'scholarships',
-      title: {
-        en: 'Scholarships',
-        sr: 'Stipendije'
-      },
-      content: {
-        en: '•\tDositeja Scholarship for top students, in the final BSc year and in the MSc year, and the University of Novi Sad scholarship for gifted students and young researchers, 2023/24.',
-        sr: '•\tDobitnica sam Dositejeve stipendije za najbolje studente u završnoj godini osnovnih i na master studijama, kao i stipendije Univerziteta u Novom Sadu za darovite studente i mlade istraživače 2023/24.'
-      }
-    },
-    {
-      id: 'nti2024',
-      title: {
-        en: 'Competition for the Best Technological Innovation 2024',
-        sr: 'Takmičenje za najbolju tehnološku inovaciju 2024'
-      },
-      content: {
-        en: '•\tIn 2024 my team and I reached the final of the national Competition for the Best Technological Innovation (student category). Our project is Accelerator, an AI-based program for adaptive video acceleration.',
-        sr: '•\tU 2024. godini sam se sa timom plasirala u finale Takmičenja za Najbolju Tehnološku Inovaciju za studente. Naš projekat je Akcelerator, program zasnovan na veštačkoj inteligenciji koji služi za adaptivno ubrzavanje video snimaka.'
-      }
-    },
-    {
-      id: 'nti2023',
-      title: {
-        en: 'Competition for the Best Technological Innovation 2023',
-        sr: 'Takmičenje za najbolju tehnološku inovaciju 2023'
-      },
-      content: {
-        en: '•\tIn 2023 I mentored a high-school team that won third place at the Competition for the Best Technological Innovation, organized by the Ministry of Science, Technological Development and Innovation of the Republic of Serbia. Our project is AlgoRythm, a program for endless music generation with adjustable parameters (tonality, key, rhythm…). My main contribution was developing the mobile app in Unity.',
-        sr: '•\tU 2023. godini sam bila mentor srednjoškolskog tima koji je osvojio treće mesto na Takmičenju za Najbolju Tehnološku Inovaciju koje organizuje Ministarstvo nauke, tehnološkog razvoja i inovacija Republike Srbije. Naš projekat je AlgoRythm – program za beskonačno generisanje muzike sa promenljivim parametrima (tonalitet, ključ, ritam…). Moj glavni doprinos je bio razvoj mobilne aplikacije u Unity-ju.'
-      }
-    },
-    {
-      id: 'eestech',
-      title: {
-        en: 'EESTech Hackathon',
-        sr: 'EESTech Hackathon'
-      },
-      content: {
-        en: '•\tI took part in the EESTech AI hackathon, where my team built a personal finance mobile app that uses an LLM to give users personalized advice.',
-        sr: '•\tUčestvovala sam na EESTech AI hakatonu na kom sam sa svojim timom napravila mobilnu aplikaciju za lične finansije koja koristi LLM da bi korisniku dala personalizovane savete.'
-      }
+      role: L('Software engineering intern', 'Praksa'),
+      period: L('May – Nov 2024', 'maj – nov 2024'),
+      bullets: LB(
+        ['Built the Java Spring backend of a risk assessment application for evaluating money-laundering risk'],
+        ['Razvila sam Java Spring backend aplikacije za procenu rizika od pranja novca']
+      ),
+      tags: ['Java', 'Spring']
     }
+  ];
+
+  filters: { id: Filter; label: Localized }[] = [
+    { id: 'all',     label: L('All', 'Sve') },
+    { id: 'games',   label: L('Games & graphics', 'Igre i grafika') },
+    { id: 'ai',      label: L('AI & research', 'AI i istraživanje') },
+    { id: 'systems', label: L('Web, cloud & systems', 'Web, cloud i sistemi') }
   ];
 
   projects: Project[] = [
     {
       id: 'thesis',
-      title: {
-        en: 'LLM-based legacy code analysis (MSc thesis)',
-        sr: 'Analiza legacy koda pomoću LLM-a (master rad)'
-      },
-      content: {
-        en: '•\tA tool (Python, ANTLR, lxml, Ollama with Qwen3-Coder, Cytoscape.js) that converts binary Oracle Forms and Reports modules to XML, parses their PL/SQL with an ANTLR grammar, and builds a knowledge base of entities and dependencies linked to the database ER schema. A locally run LLM answers questions about the code, so no source code ever leaves the machine. On a real 1990s business application it parsed all 141 PL/SQL fragments without errors, reconstructed relations between 23 tables that declare only 3 foreign keys, and found 7 missing modules and 6 unused tables.',
-        sr: '•\tAlat (Python, ANTLR, lxml, Ollama sa Qwen3-Coder modelom, Cytoscape.js) koji binarne Oracle Forms and Reports module konvertuje u XML, parsira njihov PL/SQL ANTLR gramatikom i gradi bazu znanja o entitetima i zavisnostima povezanu sa ER šemom baze. Lokalno pokrenut LLM odgovara na pitanja o kodu, tako da izvorni kod nikada ne napušta računar. Na stvarnoj poslovnoj aplikaciji iz 1990-ih parsirano je svih 141 PL/SQL fragment bez grešaka, rekonstruisane su veze između 23 tabele koje deklarišu samo 3 strana ključa, a pronađeno je 7 nedostajućih modula i 6 neiskorišćenih tabela.'
-      }
+      category: 'ai',
+      badge: L('MSc thesis', 'Master rad'),
+      title: L('LLM-based legacy code analysis', 'Analiza legacy koda pomoću LLM-a'),
+      summary: L(
+        'A tool that converts binary Oracle Forms and Reports modules to XML, parses their PL/SQL and builds a knowledge base of entities and dependencies. A locally run LLM answers questions about the code, so no source code leaves the machine.',
+        'Alat koji binarne Oracle Forms and Reports module konvertuje u XML, parsira njihov PL/SQL i gradi bazu znanja o entitetima i zavisnostima. Lokalno pokrenut LLM odgovara na pitanja o kodu, tako da izvorni kod nikada ne napušta računar.'
+      ),
+      highlight: L(
+        'On a real 1990s business application it parsed all 141 PL/SQL fragments without errors, reconstructed relations between 23 tables that declare only 3 foreign keys, and found 7 missing modules and 6 unused tables.',
+        'Na stvarnoj poslovnoj aplikaciji iz 1990-ih parsirano je svih 141 PL/SQL fragment bez grešaka, rekonstruisane su veze između 23 tabele koje deklarišu samo 3 strana ključa, a pronađeno je 7 nedostajućih modula i 6 neiskorišćenih tabela.'
+      ),
+      tags: ['Python', 'ANTLR', 'lxml', 'Ollama', 'Qwen3-Coder', 'Cytoscape.js']
     },
     {
       id: 'lumis',
+      category: 'games',
       link: 'https://github.com/milamilovic/Lumis',
-      title: { en: 'Lumis', sr: 'Lumis' },
-      content: {
-        en: '•\tA 2D pixel-art game (C#) about an astronaut stranded on a radioactive planet who survives with glowing plants that reduce radiation. It features a lighting system, crafting, inventory, a story told through journal entries, and robots the player assembles and assigns tasks such as digging and planting.',
-        sr: '•\t2D pixel-art igra (C#) o astronautu nasukanom na radioaktivnoj planeti koji preživljava uz svetleće biljke što smanjuju radijaciju. Sadrži sistem osvetljenja, izradu predmeta, inventar, priču ispričanu kroz stranice dnevnika i robote koje igrač sklapa i kojima dodeljuje zadatke, kao što su kopanje i sađenje.'
-      }
-    },
-    {
-      id: 'drone3d',
-      link: 'https://github.com/milamilovic/3D-DroneCommand',
-      title: { en: '3D DroneCommand', sr: '3D DroneCommand' },
-      content: {
-        en: '•\tAn interactive 3D control station (C++, OpenGL) for two drones flying over a textured model of Mount Majevica, with live position tracking, battery monitoring, a movable no-fly zone and collision detection. The drone is modeled in Blender.',
-        sr: '•\tInteraktivna 3D kontrolna stanica (C++, OpenGL) za dve letelice koje lete iznad teksturiranog modela planine Majevice, sa praćenjem pozicije u realnom vremenu, nadzorom baterije, pomerljivom zabranjenom zonom letenja i detekcijom sudara. Dron je modelovan u Blender-u.'
-      }
+      image: 'projects/lumis.jpg',
+      imageAlt: L('Screenshot of Lumis', 'Snimak ekrana igre Lumis'),
+      title: same('Lumis'),
+      summary: L(
+        'A 2D pixel-art game about an astronaut stranded on a radioactive planet who survives with glowing plants that reduce radiation. It has a lighting system, crafting, inventory, a story told through journal entries and robots the player assembles and assigns tasks to.',
+        '2D pixel-art igra o astronautu nasukanom na radioaktivnoj planeti koji preživljava uz svetleće biljke što smanjuju radijaciju. Sadrži sistem osvetljenja, izradu predmeta, inventar, priču ispričanu kroz stranice dnevnika i robote koje igrač sklapa i kojima dodeljuje zadatke.'
+      ),
+      tags: ['C#', 'Pixel art']
     },
     {
       id: 'zengarden',
+      category: 'games',
       link: 'https://github.com/milamilovic/ZenGardenWii',
-      title: { en: 'VR Zen Garden', sr: 'VR Zen Garden' },
-      content: {
-        en: '•\tA mobile VR Japanese zen garden for Google Cardboard (Unity): gaze-based interaction, teleportation between torii gates, spatial audio and a reactive environment. The desktop extension adds a kanji drawing canvas controlled with the Wii Remote\'s IR pointer.',
-        sr: '•\tMobilno VR iskustvo japanskog zen vrta za Google Cardboard (Unity): interakcija pogledom, teleportacija između torii kapija, prostorni zvuk i reaktivno okruženje. Desktop proširenje dodaje platno za crtanje kanđija koje se kontroliše IR pokazivačem Wii kontrolera.'
-      }
+      title: same('VR Zen Garden'),
+      summary: L(
+        'A mobile VR Japanese zen garden with gaze-based interaction, teleportation and spatial audio. The desktop extension adds a kanji drawing canvas controlled with the Wii Remote\'s IR pointer.',
+        'Mobilni VR japanski zen vrt sa interakcijom pogledom, teleportacijom i prostornim zvukom. Desktop proširenje dodaje platno za crtanje kanđija koje se kontroliše IR pokazivačem Wii kontrolera.'
+      ),
+      tags: ['Unity', 'C#', 'VR', 'Wii Remote']
     },
     {
       id: 'cosmiccards',
+      category: 'games',
       link: 'https://github.com/milamilovic/CosmicCards',
-      title: { en: 'Cosmic Cards', sr: 'Cosmic Cards' },
-      content: {
-        en: '•\tA space-themed memory card game built in Unity: scoring based on speed, attempts and combos, a configurable grid, a pause menu and a local top-10 leaderboard. Available for PC and Android.',
-        sr: '•\tMemorijska igra sa svemirskom temom napravljena u Unity-ju: bodovanje na osnovu brzine, broja pokušaja i kombinacija, podesiva tabla, pauza i lokalna top 10 lista rezultata. Dostupna za PC i Android.'
-      }
+      image: 'projects/cosmic-cards.jpg',
+      imageAlt: L('Screenshot of Cosmic Cards', 'Snimak ekrana igre Cosmic Cards'),
+      title: same('Cosmic Cards'),
+      summary: L(
+        'A space-themed memory card game with combo scoring, a configurable grid, a pause menu and a local top-10 leaderboard. Available for PC and Android.',
+        'Memorijska igra sa svemirskom temom, sa bodovanjem po kombinacijama, podesivom tablom, pauzom i lokalnom top 10 listom rezultata. Dostupna za PC i Android.'
+      ),
+      tags: ['Unity', 'C#', 'Android']
     },
     {
       id: 'inkdrop',
+      category: 'systems',
       link: 'https://github.com/milamilovic/InkDrop',
-      title: { en: 'InkDrop', sr: 'InkDrop' },
-      content: {
-        en: '•\tA system for displaying and sharing images on a 6-color e-ink display. A Flutter mobile app sends images to a Flask server, and a Raspberry Pi shows them using Floyd-Steinberg dithering, together with a QR code anyone can scan to download the original image.',
-        sr: '•\tSistem za prikaz i deljenje slika na e-ink ekranu u 6 boja. Mobilna aplikacija (Flutter) šalje slike Flask serveru, a Raspberry Pi ih prikazuje uz Floyd-Steinberg dithering, zajedno sa QR kodom preko kog svako može da preuzme originalnu sliku.'
-      }
+      image: 'projects/inkdrop.jpg',
+      imageAlt: L('InkDrop e-ink display', 'InkDrop e-ink ekran'),
+      title: same('InkDrop'),
+      summary: L(
+        'Sends images from a mobile app to a 6-color e-ink display using Floyd-Steinberg dithering, together with a QR code that lets anyone download the original image.',
+        'Šalje slike iz mobilne aplikacije na e-ink ekran u 6 boja uz Floyd-Steinberg dithering, zajedno sa QR kodom preko kog svako može da preuzme originalnu sliku.'
+      ),
+      tags: ['Flutter', 'Flask', 'Raspberry Pi', 'Python']
+    },
+    {
+      id: 'drone3d',
+      category: 'games',
+      link: 'https://github.com/milamilovic/3D-DroneCommand',
+      image: 'projects/3d-dronecommand.jpg',
+      imageAlt: L('Screenshot of 3D DroneCommand', 'Snimak ekrana aplikacije 3D DroneCommand'),
+      title: same('3D DroneCommand'),
+      summary: L(
+        'An interactive 3D control station for two drones flying over a textured model of Mount Majevica, with live position tracking, battery monitoring, a movable no-fly zone and collision detection.',
+        'Interaktivna 3D kontrolna stanica za dve letelice koje lete iznad teksturiranog modela planine Majevice, sa praćenjem pozicije u realnom vremenu, nadzorom baterije, pomerljivom zabranjenom zonom letenja i detekcijom sudara.'
+      ),
+      tags: ['C++', 'OpenGL', 'Blender']
     },
     {
       id: 'dockerplatform',
+      category: 'systems',
       link: 'https://github.com/milamilovic/docker-platform',
-      title: {
-        en: 'Docker repository hosting platform',
-        sr: 'Platforma za hostovanje Docker repozitorijuma'
-      },
-      content: {
-        en: '•\tA platform for hosting Docker repositories: Java backend, PostgreSQL, Redis, a Docker Registry and log analytics with Elasticsearch and Logstash, with the whole system started through Docker Compose.',
-        sr: '•\tPlatforma za hostovanje Docker repozitorijuma: Java backend, PostgreSQL, Redis, Docker Registry i analitika logova preko Elasticsearch-a i Logstash-a, a ceo sistem se pokreće pomoću Docker Compose-a.'
-      }
+      image: 'projects/docker-platform.jpg',
+      imageAlt: L('Screenshot of the Docker hosting platform', 'Snimak ekrana platforme za hostovanje Docker repozitorijuma'),
+      title: L('Docker repository hosting platform', 'Platforma za hostovanje Docker repozitorijuma'),
+      summary: L(
+        'A platform for hosting Docker repositories with log analytics, started as a whole through Docker Compose.',
+        'Platforma za hostovanje Docker repozitorijuma sa analitikom logova, koja se ceo pokreće preko Docker Compose-a.'
+      ),
+      tags: ['Java', 'PostgreSQL', 'Redis', 'Elasticsearch', 'Docker']
     },
     {
-      id: 'project2',
-      link: 'https://github.com/milamilovic/Netflix',
-      title: { en: 'Streaming platform', sr: 'Streaming platforma' },
-      content: {
-        en: '•\tWith my teammates I built a cloud-native video streaming platform inspired by Netflix, where users can register, search, browse, download and rate video content, while admins manage content and its transcoding. It is built on AWS services (S3, DynamoDB, Lambda, SNS, API Gateway), with infrastructure as code (CDK) and an Angular frontend.',
-        sr: '•\tSa kolegama sam napravila cloud-native platformu za video streaming, inspirisanu Netflixom, koja omogućava korisnicima registraciju, pretragu, pregled, preuzimanje i ocenjivanje video sadržaja, dok administratori upravljaju sadržajem i njegovim transkodiranjem. Izgrađena je na AWS servisima (S3, DynamoDB, Lambda, SNS, API Gateway), infrastruktura se opisuje kodom (CDK), a frontend je u Angular-u.'
-      }
-    },
-    {
-      id: 'project1',
-      link: 'https://github.com/orgs/booker-project-app/repositories',
-      title: { en: 'Booker', sr: 'Booker' },
-      content: {
-        en: '•\tDuring my fifth semester, in teams of three, we built an accommodation booking platform inspired by Booking.com. It consists of a Spring Boot backend, an Angular frontend (designed in Figma) and an Android app in Java with shake-to-sort and a dark mode.',
-        sr: '•\tNa fakultetu smo tokom petog semestra u tročlanim timovima pravili platformu za rezervacije smeštaja inspirisanu Booking-om. Sastoji se od Spring Boot backenda, Angular frontenda (dizajniranog u Figmi) i Android aplikacije u Javi sa sortiranjem protresanjem telefona i tamnim režimom.'
-      }
-    },
-    {
-      id: 'smarthome',
-      link: 'https://github.com/milamilovic/SmartHome',
-      title: { en: 'Smart home system', sr: 'Sistem pametne kuće' },
-      content: {
-        en: '•\tA simulated smart home system for the Internet of Things course: simulated Raspberry Pi devices with sensors and actuators send data over MQTT to a Flask backend, data is stored in InfluxDB and PostgreSQL and visualized in Grafana, and a React app is used for monitoring and control. Everything is containerized with Docker Compose.',
-        sr: '•\tSimulirani sistem pametne kuće za predmet Internet stvari: simulirani Raspberry Pi uređaji sa senzorima i aktuatorima šalju podatke preko MQTT-a Flask backendu, podaci se čuvaju u InfluxDB-u i PostgreSQL-u i prikazuju u Grafani, a React aplikacija služi za nadzor i upravljanje. Sve je kontejnerizovano pomoću Docker Compose-a.'
-      }
-    },
-    {
-      id: 'travel',
-      link: 'https://github.com/milamilovic/sbnz',
-      title: { en: 'Travel recommendation system', sr: 'Sistem za preporuku putovanja' },
-      content: {
-        en: '•\tA rule-based system (Java, Drools, React) that recommends a destination based on trip length, budget, departure city, travelers and interests, with a detailed day-by-day activity plan and cost estimate, and adapts its recommendations to weather conditions. Built in a pair with a classmate.',
-        sr: '•\tSistem zasnovan na pravilima (Java, Drools, React) koji na osnovu trajanja, budžeta, mesta polaska, sastava putnika i interesovanja preporučuje destinaciju, uz detaljan plan aktivnosti po danima i procenu troškova, i prilagođava preporuke vremenskim uslovima. Rađen u paru sa koleginicom.'
-      }
-    },
-    {
-      id: 'kvengine',
-      link: 'https://github.com/milamilovic/Key-Value-engine',
-      title: { en: 'Key-value engine', sr: 'Key-value engine' },
-      content: {
-        en: '•\tA data storage engine in Go (PUT, GET, DELETE, LIST and RANGE SCAN) with a write-ahead log, memtable, SSTables, LSM tree, Bloom filter, Merkle tree, caching and request rate limiting. Built in a team of three.',
-        sr: '•\tMašina za skladištenje podataka u Go-u (PUT, GET, DELETE, LIST i RANGE SCAN) sa write-ahead logom, memtable-om, SSTable-ovima, LSM stablom, Bloom filterom, Merkle stablom, keširanjem i ograničavanjem broja zahteva. Rađeno u timu od troje.'
-      }
-    },
-    {
-      id: 'mushrooms',
-      link: 'https://github.com/milamilovic/MushroomClassification',
-      title: { en: 'Mushroom classification', sr: 'Klasifikacija pečuraka' },
-      content: {
-        en: '•\tClassifying mushroom images into nine genera (Python): a comparison of a CNN, an SVM and a fine-tuned pretrained network.',
-        sr: '•\tKlasifikacija slika pečuraka u devet rodova (Python): poređenje CNN-a, SVM-a i fino podešene prethodno istrenirane mreže.'
-      }
-    },
-    {
-      id: 'chess960',
-      link: 'https://github.com/milamilovic/Chess960',
-      title: { en: 'Chess960', sr: 'Chess960' },
-      content: {
-        en: '•\tThe Fischer random chess (Chess960) piece-arrangement problem solved with a genetic algorithm in Python.',
-        sr: '•\tProblem rasporeda figura u Fišerovom slučajnom šahu (Chess960) rešen genetskim algoritmom u Python-u.'
-      }
-    },
-    {
-      id: 'mice',
-      link: 'https://github.com/milamilovic/Mice',
-      title: { en: 'Nine Men\'s Morris', sr: 'Mice (Nine Men\'s Morris)' },
-      content: {
-        en: '•\tA game against the computer in Python that uses alpha-beta pruning and heuristics.',
-        sr: '•\tIgra protiv računara u Python-u koja koristi alfa-beta odsecanje i heuristike.'
-      }
-    },
-    {
-      id: 'game1',
+      id: 'island',
+      category: 'games',
       link: 'https://github.com/milamilovic/Put_po_Srbiji',
-      title: { en: 'Island Exploration', sr: 'Istraživanje Ostrva' },
-      content: {
-        en: '•\tA game I developed on my own in Java where the player explores an island. The player can walk around, collect power-ups and talk to villagers.',
-        sr: '•\tSamostalno razvijena igra u Javi u kojoj igrač istražuje ostrvo. Igrač može da šeta po ostrvu, prikuplja power-up-ove i razgovara sa meštanima.'
-      }
-    },
-    {
-      id: 'game2',
-      link: 'https://github.com/milamilovic/AstroSpin',
-      title: { en: 'AstroSpin', sr: 'AstroSpin' },
-      content: {
-        en: '•\tDeveloped in Unity with C#, the game lets players control an astronaut who jumps from planet to planet using rotational force.',
-        sr: '•\tRazvijena u Unity-ju koristeći C#, igrica omogućava igračima da upravljaju astronautom koji skače sa planete na planetu koristeći rotacionu silu.'
-      }
+      image: 'projects/island.jpg',
+      imageAlt: L('Screenshot of Island Exploration', 'Snimak ekrana igre Istraživanje Ostrva'),
+      title: L('Island Exploration', 'Istraživanje Ostrva'),
+      summary: L(
+        'A game I built on my own in which the player explores an island, collects power-ups and talks to villagers.',
+        'Igra koju sam samostalno razvila, u kojoj igrač istražuje ostrvo, prikuplja power-up-ove i razgovara sa meštanima.'
+      ),
+      tags: ['Java']
     }
   ];
 
-  sections = {
-    about: this.about,
-    experiences: this.experiences,
-    projects: this.projects
-  };
+  filter: Filter = 'all';
+  showAll = false;
+  visibleProjects: Project[] = [];
+  collapsible = false;
+  filteredCount = 0;
+  showFilters = this.projects.length > INITIAL_PROJECTS;
+  private failedImages = new Set<string>();
 
-  activeSection = '';
+  education: Entry[] = [
+    {
+      id: 'phd',
+      role: L('PhD, Computer and Electrical Engineering', 'Doktorske studije, Računarstvo i elektrotehnika'),
+      org: L('Faculty of Technical Sciences, University of Novi Sad', 'Fakultet tehničkih nauka, Univerzitet u Novom Sadu'),
+      period: L('2026 – Present', '2026 – danas'),
+      bullets: LB(['Research area: legacy systems'], ['Oblast istraživanja: legacy sistemi'])
+    },
+    {
+      id: 'msc',
+      role: L('MSc, Software Engineering', 'Master studije, Softversko inženjerstvo'),
+      org: L('Faculty of Technical Sciences, University of Novi Sad', 'Fakultet tehničkih nauka, Univerzitet u Novom Sadu'),
+      period: same('2025 – 2026'),
+      bullets: LB(
+        ['Module: Multimedia Systems and Computer Games', 'GPA 10.0 / 10'],
+        ['Modul: Multimedijalni sistemi i računarske igre', 'Prosek 10,0 / 10']
+      )
+    },
+    {
+      id: 'bsc',
+      role: L('BSc, Software Engineering', 'Osnovne studije, Softversko inženjerstvo'),
+      org: L('Faculty of Technical Sciences, University of Novi Sad', 'Fakultet tehničkih nauka, Univerzitet u Novom Sadu'),
+      period: same('2021 – 2025'),
+      bullets: LB(['GPA 9.69 / 10'], ['Prosek 9,69 / 10'])
+    }
+  ];
 
-  constructor(private cdr: ChangeDetectorRef) {
-    // english by default
+  skills: SkillGroup[] = [
+    {
+      id: 'programming',
+      title: L('Programming', 'Programiranje'),
+      items: ['Python', 'C++', 'Java', 'JavaScript', 'HTML', 'CSS', 'SQL'].map(same)
+    },
+    {
+      id: 'graphics',
+      title: L('Graphics & games', 'Grafika i igre'),
+      items: ['Unity', 'OpenGL', 'Blender'].map(same)
+    },
+    {
+      id: 'ai',
+      title: L('AI & machine learning', 'AI i mašinsko učenje'),
+      items: [
+        same('OpenCV'),
+        same('CNNs'),
+        same('SVMs'),
+        L('Fine-tuning pretrained networks', 'Fino podešavanje prethodno istreniranih mreža'),
+        L('Local LLM pipelines (Ollama, Qwen3-Coder, Llama)', 'Lokalni LLM pipeline-ovi (Ollama, Qwen3-Coder, Llama)')
+      ]
+    },
+    {
+      id: 'web',
+      title: L('Web & cloud', 'Web i cloud'),
+      items: ['Spring Boot', 'React', 'Angular', 'Vue', 'Django', 'Flutter', 'Docker', 'AWS', 'Git'].map(same)
+    },
+    {
+      id: 'languages',
+      title: L('Languages', 'Jezici'),
+      items: [
+        L('Serbian (native)', 'Srpski (maternji)'),
+        L('English (Cambridge CAE, C2)', 'Engleski (Cambridge CAE, C2)')
+      ]
+    }
+  ];
+
+  awards: Award[] = [
+    {
+      id: 'nti2024',
+      label: same('2024'),
+      title: L(
+        'Finalist, Competition for the Best Technological Innovation',
+        'Finalista, Takmičenje za najbolju tehnološku inovaciju'
+      ),
+      description: L(
+        'National student competition. Our project, Accelerator, is an AI-based program for adaptive video acceleration.',
+        'Nacionalno takmičenje za studente. Naš projekat, Akcelerator, je program zasnovan na veštačkoj inteligenciji za adaptivno ubrzavanje video snimaka.'
+      )
+    },
+    {
+      id: 'nti2023',
+      label: same('2023'),
+      title: L(
+        'Mentor of the third-place team, Competition for the Best Technological Innovation',
+        'Mentor tima osvajača trećeg mesta, Takmičenje za najbolju tehnološku inovaciju'
+      ),
+      description: L(
+        'I mentored a high-school team at the competition organized by Serbia\'s Ministry of Science, Technological Development and Innovation. Our project, AlgoRythm, generates endless music with adjustable parameters; I developed its mobile app in Unity.',
+        'Bila sam mentor srednjoškolskom timu na takmičenju koje organizuje Ministarstvo nauke, tehnološkog razvoja i inovacija Republike Srbije. Naš projekat, AlgoRythm, beskonačno generiše muziku sa promenljivim parametrima, a ja sam razvila njegovu mobilnu aplikaciju u Unity-ju.'
+      )
+    }
+  ];
+
+  activeSection = 'about';
+
+  @ViewChild('glow') private glow?: ElementRef<HTMLElement>;
+  @ViewChild('sectionNav') private sectionNav?: ElementRef<HTMLElement>;
+
+  private sectionEls: HTMLElement[] = [];
+  private ticking = false;
+  // Set when a nav link is clicked, so the smooth scroll doesn't flicker through the sections in between.
+  private lockedId: string | null = null;
+
+  constructor(private zone: NgZone, private cdr: ChangeDetectorRef) {
     try {
       const saved = localStorage.getItem('lang');
       if (saved === 'en' || saved === 'sr') {
@@ -321,6 +366,7 @@ export class HomeComponent implements AfterViewInit {
     } catch {
     }
     document.documentElement.lang = this.lang;
+    this.refreshProjects();
   }
 
   t(text: Localized): string {
@@ -336,82 +382,171 @@ export class HomeComponent implements AfterViewInit {
     }
   }
 
-  ngAfterViewInit() {
-    this.setInitialActiveSection();
+  count(filter: Filter): number {
+    return filter === 'all' ? this.projects.length : this.projects.filter(p => p.category === filter).length;
+  }
 
-    // Initialize glow element position after the view is rendered
-    const glowElement = document.getElementById('glowEffect');
-    if (glowElement) {
-      glowElement.style.transform = `translate(-600px, -600px)`;
+  setFilter(filter: Filter) {
+    this.filter = filter;
+    this.showAll = false;
+    this.refreshProjects();
+  }
+
+  toggleShowAll() {
+    this.showAll = !this.showAll;
+    this.refreshProjects();
+  }
+
+  showAllLabel(): string {
+    return this.t(this.ui.showAll).replace('{n}', String(this.filteredCount));
+  }
+
+  hasImage(project: Project): boolean {
+    return !!project.image && !this.failedImages.has(project.id);
+  }
+
+  onImageError(project: Project) {
+    this.failedImages.add(project.id);
+  }
+
+  private refreshProjects() {
+    const list = this.filter === 'all' ? this.projects : this.projects.filter(p => p.category === this.filter);
+    this.filteredCount = list.length;
+    this.collapsible = list.length > INITIAL_PROJECTS;
+    this.visibleProjects = this.showAll ? list : list.slice(0, INITIAL_PROJECTS);
+  }
+
+  goTo(id: string, event: Event) {
+    event.preventDefault();
+    const target = document.getElementById(id);
+    if (target) {
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      this.lockedId = id;
+      this.setActive(id);
+      target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      this.releaseLockSoon();
     }
   }
 
-  setInitialActiveSection() {
-    if (this.about.length > 0) {
-      this.activeSection = 'about';
-      this.cdr.detectChanges();
+  private setActive(id: string) {
+    if (this.activeSection !== id) {
+      this.zone.run(() => {
+        this.activeSection = id;
+        // The scroll handlers run outside Angular (and the app may be zoneless),
+        // so the view must be told explicitly that it needs to re-render.
+        this.cdr.markForCheck();
+        requestAnimationFrame(() => this.scrollNavToActive(id));
+      });
     }
   }
 
-  @HostListener('document:mousemove', ['$event'])
-  onMouseMove(event: MouseEvent) {
-    const glowElement = document.getElementById('glowEffect');
-    if (glowElement) {
-      // Subtract half of the glow's width and height to center it on the mouse
-      const glowSize = 600; // Glow element's size (width/height)
-      glowElement.style.transform = `translate(${event.clientX - glowSize / 2}px, ${event.clientY - glowSize / 2}px)`;
+  private scrollNavToActive(id: string) {
+    const nav = this.sectionNav?.nativeElement;
+    const active = nav?.querySelector<HTMLElement>(`a[href="#${id}"]`);
+    if (nav && active && nav.scrollWidth > nav.clientWidth) {
+      nav.scrollTo({ left: active.offsetLeft - nav.clientWidth / 2 + active.clientWidth / 2, behavior: 'smooth' });
     }
   }
 
-  @HostListener('window:scroll', ['$event'])
-  onScroll(event: Event) {
-    const content = document.querySelector('.content') as HTMLElement;
-    const scrollTop = content.scrollTop;
-    const viewportHeight = content.clientHeight;
+  private onMouseMove = (event: MouseEvent) => {
+    const glow = this.glow?.nativeElement;
+    if (glow) {
+      const size = 600;
+      glow.style.transform = `translate(${event.clientX - size / 2}px, ${event.clientY - size / 2}px)`;
+    }
+  };
 
-    let newActiveSection = '';
+  // Any manual input (wheel, touch, keys, mouse) hands control back to scroll tracking.
+  private onUserInput = () => {
+    this.lockedId = null;
+  };
 
-    if (scrollTop === 0) {
-      newActiveSection = 'about';
+  // Release the click lock once scrolling has been quiet for a moment. Also covers
+  // clicks that don't scroll at all (already there), which would otherwise stay locked forever.
+  private lockTimer?: number;
+
+  private releaseLockSoon() {
+    window.clearTimeout(this.lockTimer);
+    this.lockTimer = window.setTimeout(() => {
+      this.lockedId = null;
+      this.scheduleUpdate();
+    }, 200);
+  }
+
+  private onScroll = () => {
+    if (this.lockedId) {
+      this.releaseLockSoon();
+    }
+    this.scheduleUpdate();
+  };
+
+  private scheduleUpdate = () => {
+    if (!this.ticking) {
+      this.ticking = true;
+      requestAnimationFrame(this.updateActiveSection);
+    }
+  };
+
+  // The active section is the last one whose top has passed a reference line
+  // placed at 35% of the viewport height. At the very bottom of the page the
+  // last section wins, since a short final section can never reach that line.
+  private updateActiveSection = () => {
+    this.ticking = false;
+    if (this.lockedId || !this.sectionEls.length) {
+      return;
+    }
+
+    const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+    let activeId = this.sectionEls[0].id;
+
+    if (atBottom) {
+      activeId = this.sectionEls[this.sectionEls.length - 1].id;
     } else {
-      // Loop through sections to determine the active one
-      Object.keys(this.sections).forEach(section => {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const elementTop = rect.top + scrollTop;
-          const elementHeight = rect.height;
-
-          // Check if the element is in the viewport
-          if (elementTop < (scrollTop + viewportHeight / 2) &&
-            (elementTop + elementHeight) > (scrollTop + viewportHeight / 2)) {
-            newActiveSection = section;
-          }
+      const line = window.innerHeight * 0.35;
+      for (const el of this.sectionEls) {
+        if (el.getBoundingClientRect().top <= line) {
+          activeId = el.id;
+        } else {
+          break;
         }
-      });
+      }
     }
 
-    if (this.activeSection !== newActiveSection) {
-      this.activeSection = newActiveSection;
+    this.setActive(activeId);
+  };
+
+  ngAfterViewInit() {
+    this.sectionEls = this.sections
+      .map(s => document.getElementById(s.id))
+      .filter((el): el is HTMLElement => !!el);
+
+    this.zone.runOutsideAngular(() => {
+      document.addEventListener('mousemove', this.onMouseMove, { passive: true });
+      window.addEventListener('scroll', this.onScroll, { passive: true });
+      window.addEventListener('resize', this.scheduleUpdate, { passive: true });
+      window.addEventListener('wheel', this.onUserInput, { passive: true });
+      window.addEventListener('touchstart', this.onUserInput, { passive: true });
+      window.addEventListener('keydown', this.onUserInput);
+      window.addEventListener('pointerdown', this.onUserInput, { passive: true });
+    });
+
+    // Page may open already scrolled (reload, back button).
+    this.scheduleUpdate();
+
+    const glow = this.glow?.nativeElement;
+    if (glow) {
+      glow.style.transform = 'translate(-600px, -600px)';
     }
   }
 
-  redirectToLink(link?: string) {
-    if (link) {
-      window.location.href = link;
-    }
-  }
-
-  scrollTo(sectionId: string) {
-    const content = document.querySelector('.content') as HTMLElement;
-    const targetElement = document.getElementById(sectionId);
-
-    if (content && targetElement) {
-      const targetPosition = targetElement.offsetTop;
-      content.scrollTo({
-        top: targetPosition,
-        behavior: 'smooth'
-      });
-    }
+  ngOnDestroy() {
+    document.removeEventListener('mousemove', this.onMouseMove);
+    window.removeEventListener('scroll', this.onScroll);
+    window.clearTimeout(this.lockTimer);
+    window.removeEventListener('resize', this.scheduleUpdate);
+    window.removeEventListener('wheel', this.onUserInput);
+    window.removeEventListener('touchstart', this.onUserInput);
+    window.removeEventListener('keydown', this.onUserInput);
+    window.removeEventListener('pointerdown', this.onUserInput);
   }
 }
