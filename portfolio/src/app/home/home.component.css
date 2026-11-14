@@ -166,14 +166,14 @@ section h2 {
   margin-bottom: 15px;
 }
 
-#project:hover {
+.project:hover {
   cursor: pointer;
   & p, & h1, & h2, & h3, & h4, & h5, & h6 {
     cursor: pointer;
   }
 }
 
-#project h3::after {
+.project h3::after {
   content: '↗'; /* Unicode arrow character */
   display: inline-block;
   margin-left: 10px;
@@ -181,7 +181,7 @@ section h2 {
   transition: opacity 0.3s ease;
 }
 
-#project:hover h3::after {
+.project:hover h3::after {
   opacity: 1;
 }
 
@@ -245,9 +245,53 @@ section h2 {
     display: none; /* Hide glow effect on mobile for better performance */
   }
 
-  #project h3::after {
+  .project h3::after {
     content: '↗'; /* Unicode arrow character */
     transition: none;
     opacity: 100%;
+  }
+}
+
+/* Project cards without a link: no pointer, no arrow */
+.project.no-link:hover,
+.project.no-link:hover p,
+.project.no-link:hover h3 {
+  cursor: default;
+}
+
+.project.no-link h3::after,
+.project.no-link:hover h3::after {
+  content: none;
+}
+
+/* Language switch */
+.chapter-nav .lang-switch {
+  margin-top: 20px;
+  color: #6c7b8b;
+}
+
+.chapter-nav .lang-switch button {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  color: #6c7b8b;
+  cursor: pointer;
+}
+
+.chapter-nav .lang-switch button:hover,
+.chapter-nav .lang-switch button.active {
+  color: #d0d8f3;
+}
+
+.chapter-nav .lang-switch button.active {
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .chapter-nav .lang-switch {
+    margin-top: 10px;
   }
 }

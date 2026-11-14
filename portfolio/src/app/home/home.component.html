@@ -3,16 +3,16 @@
 <div class="container">
   <nav class="chapter-nav"  (scroll)="onScroll($event)">
     <h3>Mila Milović</h3>
-    <p>Student softverskog inženjerstva</p>
+    <p>{{ t(ui.subtitle) }}</p>
     <ul>
       <li [class.active]="activeSection === 'about'">
-        <a (click)="scrollTo('about')">O meni</a>
+        <a (click)="scrollTo('about')">{{ t(ui.navAbout) }}</a>
       </li>
       <li [class.active]="activeSection === 'experiences'">
-        <a (click)="scrollTo('experiences')">Iskustvo</a>
+        <a (click)="scrollTo('experiences')">{{ t(ui.navExperience) }}</a>
       </li>
       <li [class.active]="activeSection === 'projects'">
-        <a (click)="scrollTo('projects')">Projekti</a>
+        <a (click)="scrollTo('projects')">{{ t(ui.navProjects) }}</a>
       </li>
     </ul>
     <div class="social-icons">
@@ -23,6 +23,11 @@
         <i class="fab fa-linkedin"></i>
       </a>
     </div>
+    <div class="lang-switch" role="group" [attr.aria-label]="t(ui.switchTo)">
+      <button type="button" lang="en" [class.active]="lang === 'en'" [attr.aria-pressed]="lang === 'en'" (click)="setLang('en')">EN</button>
+      <span aria-hidden="true">/</span>
+      <button type="button" lang="sr" [class.active]="lang === 'sr'" [attr.aria-pressed]="lang === 'sr'" (click)="setLang('sr')">SR</button>
+    </div>
   </nav>
 
   <div class="content" (scroll)="onScroll($event)">
@@ -30,24 +35,24 @@
     <section id="about">
       <!--<h2>About</h2>-->
       <div *ngFor="let paragraph of about">
-        <p class="about-paragraph">{{ paragraph.paragraph1 }}</p>
-        <p class="about-paragraph">{{ paragraph.paragraph2 }}</p>
+        <p class="about-paragraph">{{ t(paragraph.paragraph1) }}</p>
+        <p class="about-paragraph">{{ t(paragraph.paragraph2) }}</p>
       </div>
     </section>
 
     <section id="experiences">
-      <h2>Iskustvo</h2>
+      <h2>{{ t(ui.experienceHeading) }}</h2>
       <div *ngFor="let card of experiences" class="card">
-        <h3>{{ card.title }}</h3>
-        <p>{{ card.content }}</p>
+        <h3>{{ t(card.title) }}</h3>
+        <p>{{ t(card.content) }}</p>
       </div>
     </section>
 
     <section id="projects">
-      <h2>Projekti</h2>
-      <div *ngFor="let card of projects" class="card" id="project" (click)="redirectToLink(card.link)">
-        <h3>{{ card.title }}</h3>
-        <p>{{ card.content }}</p>
+      <h2>{{ t(ui.projectsHeading) }}</h2>
+      <div *ngFor="let card of projects" class="card project" [class.no-link]="!card.link" (click)="redirectToLink(card.link)">
+        <h3>{{ t(card.title) }}</h3>
+        <p>{{ t(card.content) }}</p>
       </div>
     </section>
   </div>
