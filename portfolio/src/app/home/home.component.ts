@@ -5,6 +5,12 @@ type Localized = Record<Lang, string>;
 type Category = 'games' | 'ai' | 'systems';
 type Filter = 'all' | Category;
 
+interface Photo {
+  src: string;
+  alt: Localized;
+  caption?: Localized;
+}
+
 interface Entry {
   id: string;
   role: Localized;
@@ -12,6 +18,7 @@ interface Entry {
   period: Localized;
   bullets: Record<Lang, string[]>;
   tags?: string[];
+  photos?: Photo[];
 }
 
 interface Project {
@@ -25,6 +32,7 @@ interface Project {
   link?: string;
   image?: string;
   imageAlt?: Localized;
+  images?: Photo[];
 }
 
 interface Award {
@@ -32,6 +40,7 @@ interface Award {
   label: Localized;
   title: Localized;
   description: Localized;
+  photos?: Photo[];
 }
 
 interface SkillGroup {
@@ -62,7 +71,12 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     filterLabel: L('Filter projects', 'Filtriraj projekte'),
     showAll: L('Show all {n} projects', 'Prikaži svih {n} projekata'),
     showLess: L('Show fewer projects', 'Prikaži manje projekata'),
-    viewOnGithub: L('View on GitHub', 'Pogledaj na GitHub-u')
+    viewOnGithub: L('View on GitHub', 'Pogledaj na GitHub-u'),
+    openPhoto: L('View photo', 'Pogledaj fotografiju'),
+    close: L('Close', 'Zatvori'),
+    prev: L('Previous photo', 'Prethodna fotografija'),
+    next: L('Next photo', 'Sledeća fotografija'),
+    viewPhotos: L('View photos', 'Pogledaj fotografije')
   };
 
   sections: { id: string; label: Localized; heading: Localized }[] = [
@@ -76,6 +90,18 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   heading(id: string): string {
     return this.t(this.sections.find(s => s.id === id)!.heading);
+  }
+
+  profile: Photo = {
+    src: 'photos/profile.png',
+    alt: L('Portrait of Mila Milović', 'Portret Mile Milović')
+  };
+
+  lightboxSet: Photo[] = [];
+  lightboxIndex = 0;
+
+  get lightbox(): Photo | null {
+    return this.lightboxSet[this.lightboxIndex] ?? null;
   }
 
   about: Localized[] = [
@@ -147,6 +173,12 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       category: 'ai',
       badge: L('MSc thesis', 'Master rad'),
       title: L('LLM-based legacy code analysis', 'Analiza legacy koda pomoću LLM-a'),
+      images: [
+        { src: 'projects/legacy1.png', alt: L('Dependency graph', 'Graf zavisnosti') },
+        { src: 'projects/legacy2.png', alt: L('ER diagram', 'ER dijagram') },
+        { src: 'projects/legacy3.png', alt: L('COde relations', 'Povezanosti u kodu') },
+        { src: 'projects/legacy4.png', alt: L('Missing modules', 'Nedostajuci moduli') }
+      ],
       summary: L(
         'A tool that converts binary Oracle Forms and Reports modules to XML, parses their PL/SQL and builds a knowledge base of entities and dependencies. A locally run LLM answers questions about the code, so no source code leaves the machine.',
         'Alat koji binarne Oracle Forms and Reports module konvertuje u XML, parsira njihov PL/SQL i gradi bazu znanja o entitetima i zavisnostima. Lokalno pokrenut LLM odgovara na pitanja o kodu, tako da izvorni kod nikada ne napušta računar.'
@@ -161,8 +193,11 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       id: 'lumis',
       category: 'games',
       link: 'https://github.com/milamilovic/Lumis',
-      image: 'projects/lumis.jpg',
-      imageAlt: L('Screenshot of Lumis', 'Snimak ekrana igre Lumis'),
+      images: [
+        { src: 'projects/lumis1.png', alt: L('Screenshot of Lumis', 'Snimak ekrana igre Lumis') },
+        { src: 'projects/lumis2.png', alt: L('Lumis: gameplay', 'Lumis: igranje') },
+        { src: 'projects/lumis3.png', alt: L('Lumis: inventory and crafting', 'Lumis: inventar i izrada predmeta') }
+      ],
       title: same('Lumis'),
       summary: L(
         'A 2D pixel-art game about an astronaut stranded on a radioactive planet who survives with glowing plants that reduce radiation. It has a lighting system, crafting, inventory, a story told through journal entries and robots the player assembles and assigns tasks to.',
@@ -174,6 +209,13 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       id: 'zengarden',
       category: 'games',
       link: 'https://github.com/milamilovic/ZenGardenWii',
+      images: [
+        { src: 'projects/zen3.png', alt: L('Zen garden: screenshot from the mobile version', 'Zen bašta: scena iz mobilne verzije') },
+        { src: 'projects/zen1.png', alt: L('Zen garden: Painting scene', 'Zen bašta: Scena za slikanje') },
+        { src: 'projects/zen2.png', alt: L('Zen garden: Drawing kanji', 'Zen bašta: Crtanje kanji zankova') },
+        { src: 'projects/zen5.png', alt: L('Zen garden: using the rake', 'Zen bašta: grabuljanje') },
+        { src: 'projects/zen6.png', alt: L('Zen garden: screenshot from the game', 'Zen bašta: snimak ekrana iz igre') }
+      ],
       title: same('VR Zen Garden'),
       summary: L(
         'A mobile VR Japanese zen garden with gaze-based interaction, teleportation and spatial audio. The desktop extension adds a kanji drawing canvas controlled with the Wii Remote\'s IR pointer.',
@@ -185,8 +227,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       id: 'cosmiccards',
       category: 'games',
       link: 'https://github.com/milamilovic/CosmicCards',
-      image: 'projects/cosmic-cards.jpg',
-      imageAlt: L('Screenshot of Cosmic Cards', 'Snimak ekrana igre Cosmic Cards'),
+      images: [
+        { src: 'projects/cosmic-cards1.png', alt: L('Start of the game', 'Početak igre') },
+        { src: 'projects/cosmic-cards2.png', alt: L('Mid game', 'Sredina igre') }
+      ],
       title: same('Cosmic Cards'),
       summary: L(
         'A space-themed memory card game with combo scoring, a configurable grid, a pause menu and a local top-10 leaderboard. Available for PC and Android.',
@@ -198,8 +242,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       id: 'inkdrop',
       category: 'systems',
       link: 'https://github.com/milamilovic/InkDrop',
-      image: 'projects/inkdrop.jpg',
-      imageAlt: L('InkDrop e-ink display', 'InkDrop e-ink ekran'),
+      images: [
+        { src: 'projects/inkdrop1.jpeg', alt: L('E-ink screen', 'E-ink ekran') },
+        { src: 'projects/inkdrop2.jpg', alt: L('Application screenshot', 'Snimak ekrana aplikacije') }
+      ],
       title: same('InkDrop'),
       summary: L(
         'Sends images from a mobile app to a 6-color e-ink display using Floyd-Steinberg dithering, together with a QR code that lets anyone download the original image.',
@@ -211,8 +257,12 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       id: 'drone3d',
       category: 'games',
       link: 'https://github.com/milamilovic/3D-DroneCommand',
-      image: 'projects/3d-dronecommand.jpg',
-      imageAlt: L('Screenshot of 3D DroneCommand', 'Snimak ekrana aplikacije 3D DroneCommand'),
+      images: [
+        { src: 'projects/drone1.png', alt: L('Drone model', 'Model drona') },
+        { src: 'projects/drone2.png', alt: L('Majevica model with google maps', 'Model Majevice sa google mapa') },
+        { src: 'projects/drone3.png', alt: L('Majevica model with height map', 'Model majevice sa visinskom mapom') },
+        { src: 'projects/drone4.png', alt: L('Screenshot from the simulation', 'Snimak ekrana iz simulacije') }
+      ],
       title: same('3D DroneCommand'),
       summary: L(
         'An interactive 3D control station for two drones flying over a textured model of Mount Majevica, with live position tracking, battery monitoring, a movable no-fly zone and collision detection.',
@@ -224,7 +274,11 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       id: 'dockerplatform',
       category: 'systems',
       link: 'https://github.com/milamilovic/docker-platform',
-      image: 'projects/docker-platform.jpg',
+      images: [
+        { src: 'projects/docker1.png', alt: L('Screenshot of the Docker hosting platform', 'Snimak ekrana platforme za hostovanje docker repozitorijuma') },
+        { src: 'projects/docker2.png', alt: L('DockerHub: analytics 1', 'DockerHub: analitika 1') },
+        { src: 'projects/docker3.png', alt: L('DockerHub: analytics 2', 'DockerHub: analitika 2') }
+      ],
       imageAlt: L('Screenshot of the Docker hosting platform', 'Snimak ekrana platforme za hostovanje Docker repozitorijuma'),
       title: L('Docker repository hosting platform', 'Platforma za hostovanje Docker repozitorijuma'),
       summary: L(
@@ -233,7 +287,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       ),
       tags: ['Java', 'PostgreSQL', 'Redis', 'Elasticsearch', 'Docker']
     },
-    {
+    /*{
       id: 'island',
       category: 'games',
       link: 'https://github.com/milamilovic/Put_po_Srbiji',
@@ -245,7 +299,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         'Igra koju sam samostalno razvila, u kojoj igrač istražuje ostrvo, prikuplja power-up-ove i razgovara sa meštanima.'
       ),
       tags: ['Java']
-    }
+    }*/
   ];
 
   filter: Filter = 'all';
@@ -272,7 +326,14 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       bullets: LB(
         ['Module: Multimedia Systems and Computer Games', 'GPA 10.0 / 10'],
         ['Modul: Multimedijalni sistemi i računarske igre', 'Prosek 10,0 / 10']
-      )
+      ),
+      /*photos: [
+        {
+          src: 'photos/msc-defense.jpg',
+          alt: L('MSc thesis defense', 'Odbrana master rada'),
+          caption: L('MSc thesis defense', 'Odbrana master rada')
+        }
+      ]*/
     },
     {
       id: 'bsc',
@@ -331,7 +392,17 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       description: L(
         'National student competition. Our project, Accelerator, is an AI-based program for adaptive video acceleration.',
         'Nacionalno takmičenje za studente. Naš projekat, Akcelerator, je program zasnovan na veštačkoj inteligenciji za adaptivno ubrzavanje video snimaka.'
-      )
+      ),
+      /*photos: [
+        {
+          src: 'photos/nti-2024.jpg',
+          alt: L('Photo from the 2024 competition', 'Fotografija sa takmičenja 2024'),
+          caption: L(
+            'Competition for the Best Technological Innovation, 2024',
+            'Takmičenje za najbolju tehnološku inovaciju, 2024'
+          )
+        }
+      ]*/
     },
     {
       id: 'nti2023',
@@ -343,7 +414,17 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       description: L(
         'I mentored a high-school team at the competition organized by Serbia\'s Ministry of Science, Technological Development and Innovation. Our project, AlgoRythm, generates endless music with adjustable parameters; I developed its mobile app in Unity.',
         'Bila sam mentor srednjoškolskom timu na takmičenju koje organizuje Ministarstvo nauke, tehnološkog razvoja i inovacija Republike Srbije. Naš projekat, AlgoRythm, beskonačno generiše muziku sa promenljivim parametrima, a ja sam razvila njegovu mobilnu aplikaciju u Unity-ju.'
-      )
+      ),
+      /*photos: [
+        {
+          src: 'photos/nti-2023.jpg',
+          alt: L('Photo from the 2023 competition', 'Fotografija sa takmičenja 2023'),
+          caption: L(
+            'Competition for the Best Technological Innovation, 2023',
+            'Takmičenje za najbolju tehnološku inovaciju, 2023'
+          )
+        }
+      ]*/
     }
   ];
 
@@ -351,10 +432,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('glow') private glow?: ElementRef<HTMLElement>;
   @ViewChild('sectionNav') private sectionNav?: ElementRef<HTMLElement>;
+  @ViewChild('lightboxDialog') private lightboxDialog?: ElementRef<HTMLDialogElement>;
 
   private sectionEls: HTMLElement[] = [];
   private ticking = false;
-  // Set when a nav link is clicked, so the smooth scroll doesn't flicker through the sections in between.
   private lockedId: string | null = null;
 
   constructor(private zone: NgZone, private cdr: ChangeDetectorRef) {
@@ -401,12 +482,80 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     return this.t(this.ui.showAll).replace('{n}', String(this.filteredCount));
   }
 
-  hasImage(project: Project): boolean {
-    return !!project.image && !this.failedImages.has(project.id);
+  photoOk(photo: Photo): boolean {
+    return !this.failedImages.has(photo.src);
   }
 
-  onImageError(project: Project) {
-    this.failedImages.add(project.id);
+  okPhotos(photos?: Photo[]): Photo[] {
+    return photos ? photos.filter(p => this.photoOk(p)) : [];
+  }
+
+  onPhotoError(photo: Photo) {
+    this.failedImages.add(photo.src);
+  }
+
+  openPhoto(photo: Photo, set?: Photo[]) {
+    const dialog = this.lightboxDialog?.nativeElement;
+    if (!dialog) {
+      return;
+    }
+    const list = this.okPhotos(set);
+    const index = list.indexOf(photo);
+    this.lightboxSet = index >= 0 ? list : [photo];
+    this.lightboxIndex = Math.max(index, 0);
+    const root = document.documentElement;
+    const scrollbar = window.innerWidth - root.clientWidth;
+    root.style.overflow = 'hidden';
+    root.style.paddingRight = scrollbar > 0 ? `${scrollbar}px` : '';
+    if (!dialog.open) {
+      dialog.showModal();
+    }
+  }
+
+  closeLightbox() {
+    this.lightboxDialog?.nativeElement.close();
+  }
+
+  onLightboxClosed() {
+    this.lightboxSet = [];
+    this.lightboxIndex = 0;
+    this.unlockPageScroll();
+  }
+
+  stepLightbox(delta: number) {
+    const n = this.lightboxSet.length;
+    if (n > 1) {
+      this.lightboxIndex = (this.lightboxIndex + delta + n) % n;
+    }
+  }
+
+  onLightboxKey(event: KeyboardEvent) {
+    if (event.key === 'ArrowLeft') {
+      this.stepLightbox(-1);
+    } else if (event.key === 'ArrowRight') {
+      this.stepLightbox(1);
+    }
+  }
+
+  onLightboxClick(event: MouseEvent) {
+    if (event.target === event.currentTarget) {
+      this.closeLightbox();
+    }
+  }
+
+  private unlockPageScroll() {
+    const root = document.documentElement;
+    root.style.overflow = '';
+    root.style.paddingRight = '';
+  }
+
+  projectShots(project: Project): Photo[] {
+    const list: Photo[] = project.images?.length
+      ? project.images
+      : project.image
+        ? [{ src: project.image, alt: project.imageAlt ?? project.title }]
+        : [];
+    return this.okPhotos(list);
   }
 
   private refreshProjects() {
@@ -432,8 +581,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     if (this.activeSection !== id) {
       this.zone.run(() => {
         this.activeSection = id;
-        // The scroll handlers run outside Angular (and the app may be zoneless),
-        // so the view must be told explicitly that it needs to re-render.
         this.cdr.markForCheck();
         requestAnimationFrame(() => this.scrollNavToActive(id));
       });
@@ -456,13 +603,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     }
   };
 
-  // Any manual input (wheel, touch, keys, mouse) hands control back to scroll tracking.
   private onUserInput = () => {
     this.lockedId = null;
   };
 
-  // Release the click lock once scrolling has been quiet for a moment. Also covers
-  // clicks that don't scroll at all (already there), which would otherwise stay locked forever.
   private lockTimer?: number;
 
   private releaseLockSoon() {
@@ -487,9 +631,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     }
   };
 
-  // The active section is the last one whose top has passed a reference line
-  // placed at 35% of the viewport height. At the very bottom of the page the
-  // last section wins, since a short final section can never reach that line.
   private updateActiveSection = () => {
     this.ticking = false;
     if (this.lockedId || !this.sectionEls.length) {
@@ -530,7 +671,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       window.addEventListener('pointerdown', this.onUserInput, { passive: true });
     });
 
-    // Page may open already scrolled (reload, back button).
     this.scheduleUpdate();
 
     const glow = this.glow?.nativeElement;
@@ -543,6 +683,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     document.removeEventListener('mousemove', this.onMouseMove);
     window.removeEventListener('scroll', this.onScroll);
     window.clearTimeout(this.lockTimer);
+    this.unlockPageScroll();
     window.removeEventListener('resize', this.scheduleUpdate);
     window.removeEventListener('wheel', this.onUserInput);
     window.removeEventListener('touchstart', this.onUserInput);

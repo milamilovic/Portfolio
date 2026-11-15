@@ -4,7 +4,14 @@
 <div class="layout">
   <aside class="sidebar">
     <header class="intro">
-      <h1>Mila Milović</h1>
+      <div class="image-and-name">
+        @if (photoOk(profile)) {
+          <img class="avatar" [src]="profile.src" [alt]="t(profile.alt)"
+              width="76" height="76" decoding="async" fetchpriority="high"
+              (error)="onPhotoError(profile)">
+        }
+        <h1>Mila Milović</h1>
+      </div>
       <p class="subtitle">{{ t(ui.subtitle) }}</p>
     </header>
 
@@ -69,6 +76,17 @@
                   }
                 </ul>
               }
+              @if (okPhotos(e.photos).length) {
+                <ul class="gallery">
+                  @for (ph of okPhotos(e.photos); track ph.src) {
+                    <li>
+                      <button type="button" class="thumb" (click)="openPhoto(ph, e.photos)" [attr.aria-label]="t(ui.openPhoto) + ': ' + t(ph.alt)">
+                        <img [src]="ph.src" alt="" width="152" height="114" loading="lazy" decoding="async" (error)="onPhotoError(ph)">
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
             </div>
           </li>
         }
@@ -94,12 +112,22 @@
       <ul class="projects">
         @for (p of visibleProjects; track p.id) {
           <li>
-            <article class="project" [class.has-link]="p.link" [class.has-image]="hasImage(p)">
-              @if (p.image) {
-                <!-- hidden (not removed) if the file is missing, so a forgotten screenshot never shows a broken icon -->
-                <img class="project-media" [src]="p.image" [alt]="t(p.imageAlt ?? p.title)"
+            @let shots = projectShots(p);
+            <article class="project" [class.has-link]="p.link" [class.has-image]="shots.length > 0">
+              @if (shots.length === 1) {
+                <img class="project-media" [src]="shots[0].src" [alt]="t(shots[0].alt)"
                      width="352" height="220" loading="lazy" decoding="async"
-                     [hidden]="!hasImage(p)" (error)="onImageError(p)">
+                     (error)="onPhotoError(shots[0])">
+              } @else if (shots.length > 1) {
+                <button type="button" class="project-stack"
+                        (click)="openPhoto(shots[0], shots)"
+                        [attr.aria-label]="t(ui.viewPhotos) + ' (' + shots.length + '): ' + t(p.title)">
+                  @if (shots.length > 2) {
+                    <img class="stack-card stack-back-2" [src]="shots[2].src" alt="" loading="lazy" decoding="async" (error)="onPhotoError(shots[2])">
+                  }
+                  <img class="stack-card stack-back" [src]="shots[1].src" alt="" loading="lazy" decoding="async" (error)="onPhotoError(shots[1])">
+                  <img class="stack-card stack-front" [src]="shots[0].src" alt="" loading="lazy" decoding="async" (error)="onPhotoError(shots[0])">
+                </button>
               }
               <div class="project-text">
                 <div class="project-head">
@@ -153,6 +181,17 @@
                   <li>{{ b }}</li>
                 }
               </ul>
+              @if (okPhotos(e.photos).length) {
+                <ul class="gallery">
+                  @for (ph of okPhotos(e.photos); track ph.src) {
+                    <li>
+                      <button type="button" class="thumb" (click)="openPhoto(ph, e.photos)" [attr.aria-label]="t(ui.openPhoto) + ': ' + t(ph.alt)">
+                        <img [src]="ph.src" alt="" width="152" height="114" loading="lazy" decoding="async" (error)="onPhotoError(ph)">
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
             </div>
           </li>
         }
@@ -186,6 +225,17 @@
             <div class="entry-body">
               <h3>{{ t(a.title) }}</h3>
               <p class="entry-text">{{ t(a.description) }}</p>
+              @if (okPhotos(a.photos).length) {
+                <ul class="gallery">
+                  @for (ph of okPhotos(a.photos); track ph.src) {
+                    <li>
+                      <button type="button" class="thumb" (click)="openPhoto(ph, a.photos)" [attr.aria-label]="t(ui.openPhoto) + ': ' + t(ph.alt)">
+                        <img [src]="ph.src" alt="" width="152" height="114" loading="lazy" decoding="async" (error)="onPhotoError(ph)">
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
             </div>
           </li>
         }
@@ -193,3 +243,27 @@
     </section>
   </main>
 </div>
+
+<dialog class="lightbox" #lightboxDialog
+        [attr.aria-label]="lightbox ? t(lightbox.alt) : null"
+        (click)="onLightboxClick($event)" (keydown)="onLightboxKey($event)" (close)="onLightboxClosed()">
+  @let photo = lightbox;
+  @if (photo) {
+    <figure>
+      <img [src]="photo.src" [alt]="t(photo.alt)">
+      @if (photo.caption || lightboxSet.length > 1) {
+        <figcaption>
+          {{ photo.caption ? t(photo.caption) : '' }}
+          @if (lightboxSet.length > 1) {
+            <span class="lightbox-count">{{ lightboxIndex + 1 }} / {{ lightboxSet.length }}</span>
+          }
+        </figcaption>
+      }
+    </figure>
+    @if (lightboxSet.length > 1) {
+      <button type="button" class="lightbox-nav lightbox-prev" (click)="stepLightbox(-1)" [attr.aria-label]="t(ui.prev)">‹</button>
+      <button type="button" class="lightbox-nav lightbox-next" (click)="stepLightbox(1)" [attr.aria-label]="t(ui.next)">›</button>
+    }
+    <button type="button" class="lightbox-close" (click)="closeLightbox()" [attr.aria-label]="t(ui.close)">×</button>
+  }
+</dialog>
