@@ -106,8 +106,8 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   about: Localized[] = [
     L(
-      'I\'m a PhD student at the Faculty of Technical Sciences in Novi Sad, where I research legacy systems. I completed my MSc in Software Engineering (Multimedia Systems and Computer Games module) with a GPA of 10.0, after a BSc with a GPA of 9.69. My MSc thesis is a tool for analyzing legacy code. Alongside that, I work as a teaching assistant at the faculty, teaching web programming and the Internet of Things.',
-      'Student sam doktorskih studija na Fakultetu tehničkih nauka u Novom Sadu, gde istražujem legacy sisteme. Master studije softverskog inženjerstva, modul Multimedijalni sistemi i računarske igre, završila sam sa prosekom 10,0, a osnovne sa 9,69. Moj master rad je alat za analizu legacy koda. Pored toga, radim kao asistent na fakultetu i držim vežbe iz web programiranja i Interneta stvari (IoT).'
+      'I\'m a PhD student at the Faculty of Technical Sciences in Novi Sad. I completed my MSc in Software Engineering (Multimedia Systems and Computer Games module) with a GPA of 10.0, after a BSc with a GPA of 9.69. My master\'s thesis is a tool for analyzing legacy code. Alongside that, I work as a teaching assistant at the faculty, teaching web programming and the Internet of Things.',
+      'Student sam doktorskih studija na Fakultetu tehničkih nauka u Novom Sadu. Master studije softverskog inženjerstva, modul Multimedijalni sistemi i računarske igre, završila sam sa prosekom 10,0, a osnovne sa 9,69. Moj master rad je alat za analizu legacy koda. Pored toga, radim kao asistent na fakultetu i držim vežbe iz web programiranja i Interneta stvari (IoT).'
     )
   ];
 
@@ -169,6 +169,22 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   projects: Project[] = [
     {
+      id: 'lumis',
+      category: 'games',
+      link: 'https://github.com/milamilovic/Lumis',
+      images: [
+        { src: 'projects/lumis1.png', alt: L('Screenshot of Lumis', 'Snimak ekrana igre Lumis') },
+        { src: 'projects/lumis2.png', alt: L('Lumis: gameplay', 'Lumis: igranje') },
+        { src: 'projects/lumis3.png', alt: L('Lumis: inventory and crafting', 'Lumis: inventar i izrada predmeta') }
+      ],
+      title: same('Lumis'),
+      summary: L(
+        'A 2D pixel-art game about an astronaut stranded on a radioactive planet who survives with glowing plants that reduce radiation. It has a lighting system, crafting, inventory, a story told through journal entries and robots the player assembles and assigns tasks to.',
+        '2D pixel-art igra o astronautu nasukanom na radioaktivnoj planeti koji preživljava uz svetleće biljke što smanjuju radijaciju. Sadrži sistem osvetljenja, izradu predmeta, inventar, priču ispričanu kroz stranice dnevnika i robote koje igrač sklapa i kojima dodeljuje zadatke.'
+      ),
+      tags: ['C#', 'Pixel art']
+    },
+    {
       id: 'thesis',
       category: 'ai',
       badge: L('MSc thesis', 'Master rad'),
@@ -188,22 +204,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         'Na stvarnoj poslovnoj aplikaciji iz 1990-ih parsirano je svih 141 PL/SQL fragment bez grešaka, rekonstruisane su veze između 23 tabele koje deklarišu samo 3 strana ključa, a pronađeno je 7 nedostajućih modula i 6 neiskorišćenih tabela.'
       ),
       tags: ['Python', 'ANTLR', 'lxml', 'Ollama', 'Qwen3-Coder', 'Cytoscape.js']
-    },
-    {
-      id: 'lumis',
-      category: 'games',
-      link: 'https://github.com/milamilovic/Lumis',
-      images: [
-        { src: 'projects/lumis1.png', alt: L('Screenshot of Lumis', 'Snimak ekrana igre Lumis') },
-        { src: 'projects/lumis2.png', alt: L('Lumis: gameplay', 'Lumis: igranje') },
-        { src: 'projects/lumis3.png', alt: L('Lumis: inventory and crafting', 'Lumis: inventar i izrada predmeta') }
-      ],
-      title: same('Lumis'),
-      summary: L(
-        'A 2D pixel-art game about an astronaut stranded on a radioactive planet who survives with glowing plants that reduce radiation. It has a lighting system, crafting, inventory, a story told through journal entries and robots the player assembles and assigns tasks to.',
-        '2D pixel-art igra o astronautu nasukanom na radioaktivnoj planeti koji preživljava uz svetleće biljke što smanjuju radijaciju. Sadrži sistem osvetljenja, izradu predmeta, inventar, priču ispričanu kroz stranice dnevnika i robote koje igrač sklapa i kojima dodeljuje zadatke.'
-      ),
-      tags: ['C#', 'Pixel art']
     },
     {
       id: 'zengarden',
